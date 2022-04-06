@@ -1,15 +1,8 @@
 from datetime import datetime
 from hashlib import md5
 from time import time
-from flask import current_app
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
-import jwt
-from sqlalchemy import func, and_
-from operator import attrgetter
-from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 
-from app import db, login
+from app import db
 
 
 class JasperAccount(db.Model):
@@ -98,40 +91,6 @@ class RatePlanSMSUsage(db.Model):
 
     use_default_rating = db.Column(db.Boolean)
 
-
-class SubscriberIdentityModule(db.Model):
-    __tablename__ = "subscriber_identity_module"
-    id = db.Column(db.Integer, primary_key=True)
-    iccid = db.Column(db.String(256))
-    imsi = db.Column(db.String(256))
-    msidn = db.Column(db.String(256))
-
-    status = db.Column(db.String(256))
-    active = db.Column(db.Boolean)
-
-    jasper_account_id = db.Column(db.Integer, db.ForeignKey('JasperAccount.id'))
-    jasper_account = db.relationship("JasperAccount", back_populates="SubscriberIdentityModule")
-
-    mobile_equipment = db.relationship(
-        'MobileEquipment',
-        secondary='subscriber_identity_module_mobile_equipment_association_table'
-    )
-
-
-class MobileEquipment(db.Model):
-    __tablename__ = "mobile_equipment"
-    id = db.Column(db.Integer, primary_key=True)
-    imei = db.Column(db.String(256))
-    serial_number = db.Column(db.String(256))
-    manufacture = db.Column(db.String(256))
-    device_name = db.Column(db.String(256))
-
-    subscriber_identity_modules = db.relationship(
-        SubscriberIdentityModule,
-        secondary='SubscriberIdentityModuleMobileEquipmentAssociationTable'
-    )
-
-
 class DataUsageToDate(db.Model):
     __tablename__ = "DataUsageToDate"
     id = db.Column(db.Integer, primary_key=True)
@@ -140,11 +99,43 @@ class DataUsageToDate(db.Model):
     ctdVoiceUsage = db.Column(db.BIGINT)
 
 
-class SubscriberIdentityModuleMobileEquipmentAssociationTable(db.Model):
-    __tablename__ = 'subscriber_identity_module_mobile_equipment_association_table'
-    id = db.Column(db.Integer, primary_key=True, unique=True)
-    subscriber_identity_module_id = db.Column(db.Integer, db.ForeignKey('department.id'), primary_key=True)
-    mobile_equipment_id = db.Column(db.Integer, db.ForeignKey('employee.id'), primary_key=True)
-    update_date = db.Column(db.DateTime)
-    subscriber_identity_module = db.relationship(SubscriberIdentityModule, backref=db.backref("mobile_equipment_assoc"))
-    mobile_equipment = db.relationship(MobileEquipment, backref=db.backref("subscriber_identity_module_assoc"))
+# class SubscriberIdentityModule(db.Model):
+#     __tablename__ = "subscriber_identity_module"
+#     id = db.Column(db.Integer, primary_key=True)
+#     iccid = db.Column(db.String(256))
+#     imsi = db.Column(db.String(256))
+#     msidn = db.Column(db.String(256))
+#
+#     status = db.Column(db.String(256))
+#     active = db.Column(db.Boolean)
+#
+#     jasper_account_id = db.Column(db.Integer, db.ForeignKey('JasperAccount.id'))
+#     jasper_account = db.relationship("JasperAccount", back_populates="SubscriberIdentityModule")
+#
+#     mobile_equipment = db.relationship(
+#         'MobileEquipment',
+#         secondary='subscriber_identity_module_mobile_equipment_association_table'
+#     )
+#
+#
+# class MobileEquipment(db.Model):
+#     __tablename__ = "mobile_equipment"
+#     id = db.Column(db.Integer, primary_key=True)
+#     imei = db.Column(db.String(256))
+#     serial_number = db.Column(db.String(256))
+#     manufacture = db.Column(db.String(256))
+#     device_name = db.Column(db.String(256))
+#
+#     subscriber_identity_modules = db.relationship(
+#         SubscriberIdentityModule,
+#         secondary='SubscriberIdentityModuleMobileEquipmentAssociationTable'
+#     )
+#
+# class SubscriberIdentityModuleMobileEquipmentAssociationTable(db.Model):
+#     __tablename__ = 'subscriber_identity_module_mobile_equipment_association_table'
+#     id = db.Column(db.Integer, primary_key=True, unique=True)
+#     subscriber_identity_module_id = db.Column(db.Integer, db.ForeignKey('department.id'), primary_key=True)
+#     mobile_equipment_id = db.Column(db.Integer, db.ForeignKey('employee.id'), primary_key=True)
+#     update_date = db.Column(db.DateTime)
+#     subscriber_identity_module = db.relationship(SubscriberIdentityModule, backref=db.backref("mobile_equipment_assoc"))
+#     mobile_equipment = db.relationship(MobileEquipment, backref=db.backref("subscriber_identity_module_assoc"))
