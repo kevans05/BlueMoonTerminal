@@ -64,17 +64,13 @@ class RatePlanTier(db.Model):
 class RatePlanZone(db.Model):
     __tablename__ = "rate_plan_zone"
     id = db.Column(db.Integer, primary_key=True)
+    zone_name = db.Column(db.String(256))
     report_overage_as_roaming = db.Column(db.Boolean)
+
+    rate_plan_data_usage = db.relationship("RatePlanDataUsage", back_populates="rate_plan_zone")
 
     rate_plan_id = db.Column(db.Integer, db.ForeignKey('rate_plan.id'))
     rate_plan = db.relationship("RatePlan", back_populates="rate_plan_tiers")
-
-
-class Zones(db.Model):
-    __tablename__ = "zones"
-    id = db.Column(db.Integer, primary_key=True)
-    zone_name = db.Column(db.String(256))
-
 
 
 class RatePlanDataUsage(db.Model):
@@ -84,6 +80,8 @@ class RatePlanDataUsage(db.Model):
     use_default_rating = db.Column(db.Boolean)
     usage_limit_unit = db.Column(db.String(256))
 
+    rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('RatePlanZone.id'))
+    rate_plan_zone = db.relationship("RatePlanDataUsage", back_populates="rate_plan_data_usage")
 
 class RatePlanSMSUsage(db.Model):
     __tablename__ = "rate_plan_sms_usage"
