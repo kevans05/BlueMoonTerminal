@@ -30,6 +30,8 @@ class RatePlan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
     plan_id = db.Column(db.Integer)
+    account_name = db.Column(db.String(256))
+    account_id = db.Column(db.String(256))
     version_id = db.Column(db.Integer)
     version = db.Column(db.Integer)
     status = db.Column(db.String(256))
@@ -49,7 +51,7 @@ class RatePlan(db.Model):
     rate_plan_zones = db.relationship("rate_plan_zone", back_populates="parent")
 
 
-class RatePlanTier(db.Model):
+class RatePlanTierCost(db.Model):
     __tablename__ = "rate_plan_tier"
     id = db.Column(db.Integer, primary_key=True)
     tier_level = db.Column(db.Integer)
@@ -68,6 +70,8 @@ class RatePlanZone(db.Model):
     report_overage_as_roaming = db.Column(db.Boolean)
 
     rate_plan_data_usage = db.relationship("RatePlanDataUsage", back_populates="rate_plan_zone")
+    rate_plan_sms_usage = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_zone")
+    rate_plan_voice_usage = db.relationship("RatePlanVoiceUsage", back_populates="rate_plan_zone")
 
     rate_plan_id = db.Column(db.Integer, db.ForeignKey('rate_plan.id'))
     rate_plan = db.relationship("RatePlan", back_populates="rate_plan_tiers")
@@ -80,14 +84,29 @@ class RatePlanDataUsage(db.Model):
     use_default_rating = db.Column(db.Boolean)
     usage_limit_unit = db.Column(db.String(256))
 
-    rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('RatePlanZone.id'))
+    rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
     rate_plan_zone = db.relationship("RatePlanDataUsage", back_populates="rate_plan_data_usage")
+
 
 class RatePlanSMSUsage(db.Model):
     __tablename__ = "rate_plan_sms_usage"
     id = db.Column(db.Integer, primary_key=True)
 
     use_default_rating = db.Column(db.Boolean)
+
+    rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
+    rate_plan_zone = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_sms_usage")
+
+
+class RatePlanVoiceUsage(db.Model):
+    __tablename__ = "rate_plan_voice_usage"
+    id = db.Column(db.Integer, primary_key=True)
+
+    use_default_rating = db.Column(db.Boolean)
+
+    rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
+    rate_plan_zone = db.relationship("RatePlanVoiceUsage", back_populates="rate_plan_voice_usage")
+
 
 class DataUsageToDate(db.Model):
     __tablename__ = "DataUsageToDate"
