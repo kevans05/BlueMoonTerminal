@@ -87,14 +87,30 @@ class RatePlanDataUsage(db.Model):
     included_data = db.Column(db.BIGINT)
     included_data_unit = zone_name = db.Column(db.String(2))
     zone_usage_limit_unit = db.Column(db.String(256))
-    bulk_overage_enabled =db.Column(db.Boolean)
+    bulk_overage_enabled = db.Column(db.Boolean)
     use_these_data_rounding_settings_for_all_zones = db.Column(db.Boolean)
     data_rounding_unit = db.Column(db.String(256))
     data_rounding_frequency = db.Column(db.String(256))
 
+    rate_plan_tier_data_usage = db.relationship("RatePlanTierDataUsage", back_populates="rate_plan_data_usage")
+    rate_plan_tier_sms_usage = db.relationship("RatePlanTierSMSUsage", back_populates="rate_plan_tier_sms_usage")
 
     rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
     rate_plan_zone = db.relationship("RatePlanDataUsage", back_populates="rate_plan_data_usage")
+
+
+class RatePlanTierDataUsage(db.Model):
+    __tablename__ = "rate_plan_tier_data_usage"
+    id = db.Column(db.Integer, primary_key=True)
+
+    tier_level = db.Column(db.Integer)
+    subscribers_more_than = db.Column(db.Integer)
+    subscribers_up_to = db.Column(db.String(256))
+    data_overage = db.Column(db.Float)
+    data_overage_unit = db.Column(db.String(256))
+
+    rate_plan_data_usage_id = db.Column(db.Integer, db.ForeignKey('rate_plan_data_usage.id'))
+    rate_plan_data_usage = db.relationship("RatePlanTierDataUsage", back_populates="rate_plan_tier_data_usage")
 
 
 class RatePlanSMSUsage(db.Model):
@@ -102,9 +118,29 @@ class RatePlanSMSUsage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     use_default_rating = db.Column(db.Boolean)
-
+    sms_type = db.Column(db.String(256))
+    mo_and_mt_rating = db.Column(db.String(256))
+    pool_sms_usage = db.Column(db.Boolean)
+    pool_sms_mo_usage = db.Column(db.Boolean)
+    pool_sms_mt_usage = db.Column(db.Boolean)
+    included_smsmo = db.Column(db.Boolean)
+    included_sms_mo_unit = db.Column(db.Boolean)
     rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
     rate_plan_zone = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_sms_usage")
+
+
+class RatePlanTierSMSUsage(db.Model):
+    __tablename__ = "rate_plan_tier_sms_usage"
+    id = db.Column(db.Integer, primary_key=True)
+
+    tier_level = db.Column(db.Integer)
+    subscribers_more_than = db.Column(db.Integer)
+    subscribers_up_to = db.Column(db.String(256))
+    sms_overage_mo = db.Column(db.Float)
+    sms_overage_mo_unit = db.Column(db.String(256))
+
+    rate_plan_data_usage_id = db.Column(db.Integer, db.ForeignKey('rate_plan_data_usage.id'))
+    rate_plan_data_usage = db.relationship("RatePlanTierDataUsage", back_populates="rate_plan_tier_data_usage")
 
 
 class RatePlanVoiceUsage(db.Model):
