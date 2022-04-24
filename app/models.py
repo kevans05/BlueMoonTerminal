@@ -84,6 +84,15 @@ class RatePlanDataUsage(db.Model):
     use_default_rating = db.Column(db.Boolean)
     usage_limit_unit = db.Column(db.String(256))
 
+    included_data = db.Column(db.BIGINT)
+    included_data_unit = zone_name = db.Column(db.String(2))
+    zone_usage_limit_unit = db.Column(db.String(256))
+    bulk_overage_enabled =db.Column(db.Boolean)
+    use_these_data_rounding_settings_for_all_zones = db.Column(db.Boolean)
+    data_rounding_unit = db.Column(db.String(256))
+    data_rounding_frequency = db.Column(db.String(256))
+
+
     rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
     rate_plan_zone = db.relationship("RatePlanDataUsage", back_populates="rate_plan_data_usage")
 
