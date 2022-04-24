@@ -1,16 +1,12 @@
-# This is a sample Python script.
+from app import create_app, db, cli
+#from app.models import User
+import os
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+#app = create_app(os.getenv('FLASK_CONFIG') or 'default')
+app = create_app()
+cli.register(app)
 
+@app.shell_context_processor
+def make_shell_context():
+    return {'db': db}
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
