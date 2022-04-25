@@ -5,6 +5,24 @@ from time import time
 from app import db
 
 
+class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
+    __tablename__ = 'association_between_subscriber_identity_module_device'
+    subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
+    rate_plan_id = db.Column(db.ForeignKey('rate_plan.id'), primary_key=True)
+    date_time_of_change = db.Column(db.DateTime())
+    rate_plans = db.relationship("RatePlan", back_populates="sims")
+    sim = db.relationship("SIM", back_populates="devices")
+
+
+class AssociationBetweenSubscriberIdentityModuleRatePlan(db.Model):
+    __tablename__ = 'association_between_subscriber_identity_module_rate_plan'
+    subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
+    device_id = db.Column(db.ForeignKey('device.id'), primary_key=True)
+    date_time_of_change = db.Column(db.DateTime())
+    device = db.relationship("Device", back_populates="sims")
+    sim = db.relationship("SIM", back_populates="devices")
+
+
 class JasperAccount(db.Model):
     __tablename__ = "jasper_account"
     id = db.Column(db.Integer, primary_key=True)
@@ -43,6 +61,8 @@ class RatePlan(db.Model):
     lengthOfTerm = db.Column(db.Integer)
     subscriptionChargeUnit = db.Column(db.String(256))
     active = db.Column(db.Boolean)
+
+    sims = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="rate_plans")
 
     jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
     jasper_account = db.relationship("jasper_account", back_populates="rate_plans")
@@ -180,51 +200,68 @@ class RatePlanTierVoiceUsage(db.Model):
     rate_plan_voice_usage = db.relationship("RatePlanTierVoiceUsage", back_populates="rate_plan_tier_voice_usage")
 
 
+class SubscriberIdentityModule(db.Model):
+    __tablename__ = "subscriber_identity_module"
+    id = db.Column(db.Integer, primary_key=True)
+    imei = db.Column(db.String(256))
+    imsi = db.Column(db.String(256))
+    msisdn = db.Column(db.String(256))
+    status = db.Column(db.String(256))
+    communication_plan = db.Column(db.String(256))
+
+    date_activated = db.Column(db.DateTime())
+    date_added = db.Column(db.DateTime())
+    date_updated = db.Column(db.DateTime())
+    date_shipped = db.Column(db.DateTime())
+    account_id = db.Column(db.String(256))
+    operator_custom1 = db.Column(db.String(256))
+    operator_custom2 = db.Column(db.String(256))
+    operator_custom3 = db.Column(db.String(256))
+    operator_custom4 = db.Column(db.String(256))
+    account_custom1 = db.Column(db.String(256))
+    account_custom2 = db.Column(db.String(256))
+    account_custom3 = db.Column(db.String(256))
+    account_custom4 = db.Column(db.String(256))
+    account_custom5 = db.Column(db.String(256))
+    account_custom6 = db.Column(db.String(256))
+    account_custom7 = db.Column(db.String(256))
+    account_custom8 = db.Column(db.String(256))
+    account_custom9 = db.Column(db.String(256))
+    account_custom10 = db.Column(db.String(256))
+    customer_custom1 = db.Column(db.String(256))
+    customer_custom2 = db.Column(db.String(256))
+    customer_custom3 = db.Column(db.String(256))
+    customer_custom4 = db.Column(db.String(256))
+    customer_custom5 = db.Column(db.String(256))
+    sim_notes = db.Column(db.String(256))
+    euiccid = db.Column(db.String(256))
+    device_id = db.Column(db.String(256))
+    modem_id = db.Column(db.String(256))
+    global_sim_type = db.Column(db.String(256))
+    mec = db.Column(db.String(256))
+
+    devices = db.relationship("AssociationBetweenSubscriberIdentityModuleDevice", back_populates="sim")
+    data_usage_to_date = db.relationship("DataUsageToDate", back_populates="subscriber_identity_module")
+    rate_plans = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="sim")
+
+
+class Device(db.Model):
+    __tablename__ = "device"
+    id = db.Column(db.Integer, primary_key=True)
+    imei = db.Column(db.String(256))
+    serial_number = db.Column(db.String(256))
+    manufacture = db.Column(db.String(256))
+    device_name = db.Column(db.String(256))
+    sims = db.relationship("AssociationBetweenSubscriberIdentityModuleDevice", back_populates="device")
+
+
 class DataUsageToDate(db.Model):
-    __tablename__ = "DataUsageToDate"
+    __tablename__ = "data_usage_to_date"
     id = db.Column(db.Integer, primary_key=True)
     ctdDataUsage = db.Column(db.BIGINT)
     ctdSMSUsage = db.Column(db.BIGINT)
     ctdVoiceUsage = db.Column(db.BIGINT)
+    date_updated = db.Column(db.DateTime())
 
-
-# class SubscriberIdentityModule(db.Model):
-#     __tablename__ = "subscriber_identity_module"
-#     id = db.Column(db.Integer, primary_key=True)
-#     iccid = db.Column(db.String(256))
-#     imsi = db.Column(db.String(256))
-#     msidn = db.Column(db.String(256))
-#
-#     status = db.Column(db.String(256))
-#     active = db.Column(db.Boolean)
-#
-#     jasper_account_id = db.Column(db.Integer, db.ForeignKey('JasperAccount.id'))
-#     jasper_account = db.relationship("JasperAccount", back_populates="SubscriberIdentityModule")
-#
-#     mobile_equipment = db.relationship(
-#         'MobileEquipment',
-#         secondary='subscriber_identity_module_mobile_equipment_association_table'
-#     )
-#
-#
-# class MobileEquipment(db.Model):
-#     __tablename__ = "mobile_equipment"
-#     id = db.Column(db.Integer, primary_key=True)
-#     imei = db.Column(db.String(256))
-#     serial_number = db.Column(db.String(256))
-#     manufacture = db.Column(db.String(256))
-#     device_name = db.Column(db.String(256))
-#
-#     subscriber_identity_modules = db.relationship(
-#         SubscriberIdentityModule,
-#         secondary='SubscriberIdentityModuleMobileEquipmentAssociationTable'
-#     )
-#
-# class SubscriberIdentityModuleMobileEquipmentAssociationTable(db.Model):
-#     __tablename__ = 'subscriber_identity_module_mobile_equipment_association_table'
-#     id = db.Column(db.Integer, primary_key=True, unique=True)
-#     subscriber_identity_module_id = db.Column(db.Integer, db.ForeignKey('department.id'), primary_key=True)
-#     mobile_equipment_id = db.Column(db.Integer, db.ForeignKey('employee.id'), primary_key=True)
-#     update_date = db.Column(db.DateTime)
-#     subscriber_identity_module = db.relationship(SubscriberIdentityModule, backref=db.backref("mobile_equipment_assoc"))
-#     mobile_equipment = db.relationship(MobileEquipment, backref=db.backref("subscriber_identity_module_assoc"))
+    sim_id = db.Column(db.Integer, db.ForeignKey('subscriber_identity_module.id'))
+    sim = db.relationship("SubscriberIdentityModule", back_populates="DataUsageToDate")
