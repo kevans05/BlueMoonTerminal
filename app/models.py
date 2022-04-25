@@ -93,7 +93,6 @@ class RatePlanDataUsage(db.Model):
     data_rounding_frequency = db.Column(db.String(256))
 
     rate_plan_tier_data_usage = db.relationship("RatePlanTierDataUsage", back_populates="rate_plan_data_usage")
-    rate_plan_tier_sms_usage = db.relationship("RatePlanTierSMSUsage", back_populates="rate_plan_tier_sms_usage")
 
     rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
     rate_plan_zone = db.relationship("RatePlanDataUsage", back_populates="rate_plan_data_usage")
@@ -125,6 +124,9 @@ class RatePlanSMSUsage(db.Model):
     pool_sms_mt_usage = db.Column(db.Boolean)
     included_smsmo = db.Column(db.Boolean)
     included_sms_mo_unit = db.Column(db.Boolean)
+
+    rate_plan_tier_sms_usage = db.relationship("RatePlanTierSMSUsage", back_populates="rate_plan_tier_sms_usage")
+
     rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
     rate_plan_zone = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_sms_usage")
 
@@ -139,8 +141,8 @@ class RatePlanTierSMSUsage(db.Model):
     sms_overage_mo = db.Column(db.Float)
     sms_overage_mo_unit = db.Column(db.String(256))
 
-    rate_plan_data_usage_id = db.Column(db.Integer, db.ForeignKey('rate_plan_data_usage.id'))
-    rate_plan_data_usage = db.relationship("RatePlanTierDataUsage", back_populates="rate_plan_tier_data_usage")
+    rate_plan_sms_usage_id = db.Column(db.Integer, db.ForeignKey('rate_plan_sms_usage.id'))
+    rate_plan_sms_usage = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_tier_sms_usage")
 
 
 class RatePlanVoiceUsage(db.Model):
@@ -148,9 +150,34 @@ class RatePlanVoiceUsage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     use_default_rating = db.Column(db.Boolean)
+    voice_type = db.Column(db.String(256))
+    mo_and_mt_rating = db.Column(db.String(256))
+    pool_voice_usage = db.Column(db.Boolean)
+    pool_voice_mo_usage = db.Column(db.Boolean)
+    pool_voice_mt_usage = db.Column(db.Boolean)
+    included_voice = db.Column(db.String(256))
+    included_voice_unit = db.Column(db.String(256))
+    use_these_data_rounding_settings_for_all_zones = db.Column(db.Boolean)
+    voice_rounding_unit = db.Column(db.String(256))
+
+    rate_plan_tier_voice_usage = db.relationship("RatePlanTierVoiceUsage", back_populates="rate_plan_tier_voice_usage")
 
     rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
     rate_plan_zone = db.relationship("RatePlanVoiceUsage", back_populates="rate_plan_voice_usage")
+
+
+class RatePlanTierVoiceUsage(db.Model):
+    __tablename__ = "rate_plan_tier_voice_usage"
+    id = db.Column(db.Integer, primary_key=True)
+
+    tier_level = db.Column(db.Integer)
+    subscribers_more_than = db.Column(db.Integer)
+    subscribers_up_to = db.Column(db.String(256))
+    voice_overage = db.Column(db.Integer)
+    voice_overage_unit = db.Column(db.String(256))
+
+    rate_plan_voice_usage_id = db.Column(db.Integer, db.ForeignKey('rate_plan_voice_usage.id'))
+    rate_plan_voice_usage = db.relationship("RatePlanTierVoiceUsage", back_populates="rate_plan_tier_voice_usage")
 
 
 class DataUsageToDate(db.Model):
