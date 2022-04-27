@@ -101,7 +101,7 @@ class RatePlanDataUsage(db.Model):
     usage_limit_unit = db.Column(db.String(256))
 
     included_data = db.Column(db.BIGINT)
-    included_data_unit = zone_name = db.Column(db.String(2))
+    included_data_unit = db.Column(db.String(2))
     zone_usage_limit_unit = db.Column(db.String(256))
     bulk_overage_enabled = db.Column(db.Boolean)
     use_these_data_rounding_settings_for_all_zones = db.Column(db.Boolean)
