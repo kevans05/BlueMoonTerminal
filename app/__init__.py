@@ -49,8 +49,7 @@ def create_app(config_class=Config):
 
         app.logger.setLevel(logging.INFO)
         app.logger.info('Teal Jasmine startup')
-    from app import tasks as task
-    task.long_task.apply_async()
+    app.logger.info("FUCK")
     return app
 
 
