@@ -6,8 +6,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 from celery import Celery
-
 from config import Config
+
+
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -15,6 +16,7 @@ migrate = Migrate()
 logger = logging.getLogger("pylog")
 logger.setLevel(logging.DEBUG)
 
+celery = Celery(__name__, broker=Config.CELERY_BROKER_URL)
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -24,8 +26,6 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Initialize Celery
-    celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
     celery.conf.update(app.config)
 
     from app.main import bp as main_bp
@@ -49,8 +49,7 @@ def create_app(config_class=Config):
 
         app.logger.setLevel(logging.INFO)
         app.logger.info('Teal Jasmine startup')
-    app.logger.info("FUCK")
-    return app
 
+    return app
 
 from app import models
