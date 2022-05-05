@@ -1,11 +1,11 @@
 import logging
-from logging.handlers import SMTPHandler, RotatingFileHandler
+from logging.handlers import RotatingFileHandler
 import os
 from flask import Flask, request, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
-from celery import Celery
+
 from config import Config
 
 db = SQLAlchemy()
@@ -14,18 +14,20 @@ migrate = Migrate()
 logger = logging.getLogger("pylog")
 logger.setLevel(logging.DEBUG)
 
-celery = Celery(__name__, broker=Config.CELERY_BROKER_URL)
 
-
-def create_app(config_class=Config):
+def create_app_flask(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
     db.init_app(app)
     migrate.init_app(app, db)
 
+
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
+
+    # from app.tasks import bp as tasks_bp
+    # app.register_blueprint(tasks_bp)
 
     if not app.debug and not app.testing:
         if app.config['LOG_TO_STDOUT']:
@@ -47,5 +49,3 @@ def create_app(config_class=Config):
         app.logger.info('Teal Jasmine startup')
 
     return app
-
-from app import models
