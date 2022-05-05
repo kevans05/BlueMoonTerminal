@@ -20,4 +20,5 @@ class Config(object):
     MS_TRANSLATOR_KEY = os.environ.get('MS_TRANSLATOR_KEY')
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
     POSTS_PER_PAGE = 25
-    CELERY_BROKER_URL = os.environ.get('REDIS_URL') or 'redis://'
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') or 'redis://'
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')
