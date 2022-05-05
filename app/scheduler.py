@@ -13,7 +13,6 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(30.0, test.s('world'), expires=10)
 
 
-
 @celery.task
 def test(arg):
     print(arg)
