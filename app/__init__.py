@@ -4,6 +4,7 @@ import os
 from flask import Flask, request, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_mail import Mail
 from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
 
@@ -20,6 +21,7 @@ login.login_message = 'Please log in to access this page.'
 logger = logging.getLogger("pylog")
 logger.setLevel(logging.DEBUG)
 
+mail = Mail()
 
 def create_app_flask(config_class=Config):
     app = Flask(__name__)
@@ -28,6 +30,7 @@ def create_app_flask(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
+    mail.init_app(app)
     bootstrap.init_app(app)
 
     from app.errors import bp as errors_bp
