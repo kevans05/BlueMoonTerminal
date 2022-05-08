@@ -13,8 +13,8 @@ class AssociationBetweenSubscriberIdentityModuleRatePlan(db.Model):
     subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
     rate_plan_id = db.Column(db.ForeignKey('rate_plan.id'), primary_key=True)
     date_time_of_change = db.Column(db.DateTime())
-    rate_plans = db.relationship("RatePlan", back_populates="sims")
-    sim = db.relationship("SubscriberIdentityModule", back_populates="devices")
+    rate_plans = db.relationship("RatePlan", backref=db.backref("association_between_subscriber_identity_module_rate_plan", cascade="all, delete-orphan"))
+    sim = db.relationship("SubscriberIdentityModule", backref=db.backref("association_between_subscriber_identity_module_rate_plan", cascade="all, delete-orphan"))
 
 
 class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
@@ -22,8 +22,8 @@ class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
     subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
     device_id = db.Column(db.ForeignKey('device.id'), primary_key=True)
     date_time_of_change = db.Column(db.DateTime())
-    device = db.relationship("Device", back_populates="sims")
-    sim = db.relationship("SubscriberIdentityModule", back_populates="devices")
+    device = db.relationship("Device", backref=db.backref("association_between_subscriber_identity_module_device", cascade="all, delete-orphan"))
+    sim = db.relationship("SubscriberIdentityModule", backref=db.backref("association_between_subscriber_identity_module_device", cascade="all, delete-orphan"))
 
 
 class User(UserMixin, db.Model):
