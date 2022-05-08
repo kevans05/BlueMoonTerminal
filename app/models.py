@@ -8,26 +8,26 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login
 
 
-class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
-    __tablename__ = 'association_between_subscriber_identity_module_device'
+class AssociationBetweenSubscriberIdentityModuleRatePlan(db.Model):
+    __tablename__ = 'association_between_subscriber_identity_module_rate_plan'
     subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
     rate_plan_id = db.Column(db.ForeignKey('rate_plan.id'), primary_key=True)
     date_time_of_change = db.Column(db.DateTime())
     rate_plans = db.relationship("RatePlan", back_populates="sims")
-    sim = db.relationship("SIM", back_populates="devices")
+    sim = db.relationship("SubscriberIdentityModule", back_populates="devices")
 
 
-class AssociationBetweenSubscriberIdentityModuleRatePlan(db.Model):
-    __tablename__ = 'association_between_subscriber_identity_module_rate_plan'
+class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
+    __tablename__ = 'association_between_subscriber_identity_module_device'
     subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
     device_id = db.Column(db.ForeignKey('device.id'), primary_key=True)
     date_time_of_change = db.Column(db.DateTime())
     device = db.relationship("Device", back_populates="sims")
-    sim = db.relationship("SIM", back_populates="devices")
+    sim = db.relationship("SubscriberIdentityModule", back_populates="devices")
 
 
 class User(UserMixin, db.Model):
-    __tablename__ = "user"
+    __tablename__ = "User"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
@@ -45,6 +45,10 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    @login.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
+
     def get_reset_password_token(self, expires_in=600):
         return jwt.encode(
             {'reset_password': self.id, 'exp': time() + expires_in},
@@ -58,10 +62,6 @@ class User(UserMixin, db.Model):
         except:
             return
         return User.query.get(id)
-
-    @login.user_loader
-    def load_user(id):
-        return User.query.get(int(id))
 
 
 class JasperAccount(db.Model):
@@ -83,6 +83,7 @@ class JasperCredential(db.Model):
     jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
     jasper_account = db.relationship("jasper_account", back_populates="jasper_credentials")
     users = db.relationship("user", back_populates="jasper_credential")
+
 
 class RatePlan(db.Model):
     __tablename__ = "rate_plan"
@@ -281,7 +282,7 @@ class SubscriberIdentityModule(db.Model):
     global_sim_type = db.Column(db.String(256))
     mec = db.Column(db.String(256))
 
-    devices = db.relationship("AssociationBetweenSubscriberIdentityModuleDevice", back_populates="sim")
+    devices = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="sim")
     data_usage_to_date = db.relationship("DataUsageToDate", back_populates="subscriber_identity_module")
     rate_plans = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="sim")
 
@@ -293,7 +294,7 @@ class Device(db.Model):
     serial_number = db.Column(db.String(256))
     manufacture = db.Column(db.String(256))
     device_name = db.Column(db.String(256))
-    sims = db.relationship("AssociationBetweenSubscriberIdentityModuleDevice", back_populates="device")
+    sims = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="device")
 
 
 class DataUsageToDate(db.Model):
