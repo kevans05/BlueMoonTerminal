@@ -34,7 +34,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
 
     jasper_credential_id = db.Column(db.Integer, db.ForeignKey('jasper_credential.id'))
-    jasper_credential = db.relationship("jasper_credential", back_populates="user")
+    jasper_credential = db.relationship("JasperCredential", back_populates="users")
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -82,7 +82,7 @@ class JasperCredential(db.Model):
 
     jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
     jasper_account = db.relationship("jasper_account", back_populates="jasper_credentials")
-    users = db.relationship("user", back_populates="jasper_credential")
+    users = db.relationship("User", back_populates="jasper_credential")
 
 
 class RatePlan(db.Model):
