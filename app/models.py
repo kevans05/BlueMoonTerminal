@@ -7,14 +7,25 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import db, login
 
+association_between_jasper_credential_jasper_account = db.Table('association_between_jasper_credential_jasper_account',
+                                                                db.Model.metadata, db.Column('jasper_credential_id',
+                                                                                             db.ForeignKey(
+                                                                                                 'jasper_credential.id')),
+                                                                db.Column('jasper_account_id',
+                                                                          db.ForeignKey('jasper_account.id')))
+
 
 class AssociationBetweenSubscriberIdentityModuleRatePlan(db.Model):
     __tablename__ = 'association_between_subscriber_identity_module_rate_plan'
     subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
     rate_plan_id = db.Column(db.ForeignKey('rate_plan.id'), primary_key=True)
     date_time_of_change = db.Column(db.DateTime())
-    rate_plans = db.relationship("RatePlan", backref=db.backref("association_between_subscriber_identity_module_rate_plan", cascade="all, delete-orphan"))
-    sim = db.relationship("SubscriberIdentityModule", backref=db.backref("association_between_subscriber_identity_module_rate_plan", cascade="all, delete-orphan"))
+    rate_plans = db.relationship("RatePlan",
+                                 backref=db.backref("association_between_subscriber_identity_module_rate_plan",
+                                                    cascade="all, delete-orphan"))
+    sim = db.relationship("SubscriberIdentityModule",
+                          backref=db.backref("association_between_subscriber_identity_module_rate_plan",
+                                             cascade="all, delete-orphan"))
 
 
 class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
@@ -22,19 +33,24 @@ class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
     subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
     device_id = db.Column(db.ForeignKey('device.id'), primary_key=True)
     date_time_of_change = db.Column(db.DateTime())
-    device = db.relationship("Device", backref=db.backref("association_between_subscriber_identity_module_device", cascade="all, delete-orphan"))
-    sim = db.relationship("SubscriberIdentityModule", backref=db.backref("association_between_subscriber_identity_module_device", cascade="all, delete-orphan"))
+    device = db.relationship("Device", backref=db.backref("association_between_subscriber_identity_module_device",
+                                                          cascade="all, delete-orphan"))
+    sim = db.relationship("SubscriberIdentityModule",
+                          backref=db.backref("association_between_subscriber_identity_module_device",
+                                             cascade="all, delete-orphan"))
 
 
 class User(UserMixin, db.Model):
-    __tablename__ = "User"
+    __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
 
-    jasper_credential_id = db.Column(db.Integer, db.ForeignKey('jasper_credential.id'))
-    jasper_credential = db.relationship("jasper_credential", back_populates="user")
+    # jasper_credential_id = db.Column(db.Integer, db.ForeignKey('jasper_credential.id'))
+    # jasper_credential = db.relationship("jasper_credential", back_populates="user")
+
+    jasper_credential = db.relationship("JasperCredential", back_populates="users")
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -69,9 +85,15 @@ class JasperAccount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     resource_url = db.Column(db.String(256))
 
-    jasper_credentials = db.relationship("jasper_credential", back_populates="jasper_account")
-    subscriber_identity_module = db.relationship("subscriber_identity_module", back_populates="jasper_account")
-    rate_plans = db.relationship("rate_plan", back_populates="jasper_account")
+    subscriber_identity_modules = db.relationship("SubscriberIdentityModule", back_populates="jasper_accounts")
+
+    rate_plans = db.relationship("RatePlan", back_populates="jasper_account")
+
+    jasper_credentials = db.relationship("JasperCredential",
+                                         secondary=association_between_jasper_credential_jasper_account,
+                                         back_populates="jasper_accounts")
+
+    # jasper_credentials = db.relationship("jasper_credential", back_populates="jasper_account")
 
 
 class JasperCredential(db.Model):
@@ -80,9 +102,15 @@ class JasperCredential(db.Model):
     username = db.Column(db.String(256))
     api_key = db.Column(db.String(256))
 
-    jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
-    jasper_account = db.relationship("jasper_account", back_populates="jasper_credentials")
-    users = db.relationship("user", back_populates="jasper_credential")
+    jasper_accounts = db.relationship("JasperAccount", secondary=association_between_jasper_credential_jasper_account,
+                                     back_populates="jasper_credentials")
+
+    users_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    users = db.relationship("User", back_populates="jasper_credential")
+
+    # jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
+    # jasper_account = db.relationship("jasper_account", back_populates="jasper_credentials")
+    # users = db.relationship("user", back_populates="jasper_credential")
 
 
 class RatePlan(db.Model):
@@ -107,7 +135,7 @@ class RatePlan(db.Model):
     sims = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="rate_plans")
 
     jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
-    jasper_account = db.relationship("jasper_account", back_populates="rate_plans")
+    jasper_account = db.relationship("JasperAccount", back_populates="rate_plans")
 
     rate_plan_tiers = db.relationship("rate_plan_tier", back_populates="parent")
     rate_plan_zones = db.relationship("rate_plan_zone", back_populates="parent")
@@ -285,6 +313,9 @@ class SubscriberIdentityModule(db.Model):
     devices = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="sim")
     data_usage_to_date = db.relationship("DataUsageToDate", back_populates="subscriber_identity_module")
     rate_plans = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="sim")
+
+    jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
+    jasper_accounts = db.relationship("JasperAccount", back_populates="subscriber_identity_modules")
 
 
 class Device(db.Model):
