@@ -137,8 +137,8 @@ class RatePlan(db.Model):
     jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
     jasper_account = db.relationship("JasperAccount", back_populates="rate_plans")
 
-    rate_plan_tiers = db.relationship("rate_plan_tier", back_populates="parent")
-    rate_plan_zones = db.relationship("rate_plan_zone", back_populates="parent")
+    rate_plan_tiers = db.relationship("RatePlanTierCost", back_populates="rate_plan")
+    rate_plan_zones = db.relationship("RatePlanZone", back_populates="rate_plan")
 
 
 class RatePlanTierCost(db.Model):
@@ -159,12 +159,12 @@ class RatePlanZone(db.Model):
     zone_name = db.Column(db.String(256))
     report_overage_as_roaming = db.Column(db.Boolean)
 
-    rate_plan_data_usage = db.relationship("RatePlanDataUsage", back_populates="rate_plan_zone")
-    rate_plan_sms_usage = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_zone")
-    rate_plan_voice_usage = db.relationship("RatePlanVoiceUsage", back_populates="rate_plan_zone")
+    rate_plan_data_usage = db.relationship("RatePlanDataUsage", back_populates="rate_plan_zones")
+    rate_plan_sms_usage = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_zones")
+    rate_plan_voice_usage = db.relationship("RatePlanVoiceUsage", back_populates="rate_plan_zones")
 
     rate_plan_id = db.Column(db.Integer, db.ForeignKey('rate_plan.id'))
-    rate_plan = db.relationship("RatePlan", back_populates="rate_plan_tiers")
+    rate_plan = db.relationship("RatePlan", back_populates="rate_plan_zones")
 
 
 class RatePlanDataUsage(db.Model):
@@ -182,10 +182,10 @@ class RatePlanDataUsage(db.Model):
     data_rounding_unit = db.Column(db.String(256))
     data_rounding_frequency = db.Column(db.String(256))
 
-    rate_plan_tier_data_usage = db.relationship("RatePlanTierDataUsage", back_populates="rate_plan_data_usage")
+    rate_plan_tier_data_usage = db.relationship("RatePlanTierDataUsage", back_populates="rate_plan_data_usages")
 
     rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
-    rate_plan_zone = db.relationship("RatePlanDataUsage", back_populates="rate_plan_data_usage")
+    rate_plan_zones = db.relationship("RatePlanZone", back_populates="rate_plan_data_usage")
 
 
 class RatePlanTierDataUsage(db.Model):
@@ -198,8 +198,8 @@ class RatePlanTierDataUsage(db.Model):
     data_overage = db.Column(db.Float)
     data_overage_unit = db.Column(db.String(256))
 
-    rate_plan_data_usage_id = db.Column(db.Integer, db.ForeignKey('rate_plan_data_usage.id'))
-    rate_plan_data_usage = db.relationship("RatePlanTierDataUsage", back_populates="rate_plan_tier_data_usage")
+    rate_plan_data_usages_id = db.Column(db.Integer, db.ForeignKey('rate_plan_data_usage.id'))
+    rate_plan_data_usages = db.relationship("RatePlanDataUsage", back_populates="rate_plan_tier_data_usage")
 
 
 class RatePlanSMSUsage(db.Model):
@@ -215,10 +215,10 @@ class RatePlanSMSUsage(db.Model):
     included_smsmo = db.Column(db.Boolean)
     included_sms_mo_unit = db.Column(db.Boolean)
 
-    rate_plan_tier_sms_usage = db.relationship("RatePlanTierSMSUsage", back_populates="rate_plan_tier_sms_usage")
+    rate_plan_tier_sms_usages = db.relationship("RatePlanTierSMSUsage", back_populates="rate_plan_sms_usages")
 
-    rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
-    rate_plan_zone = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_sms_usage")
+    rate_plan_zones_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
+    rate_plan_zones = db.relationship("RatePlanZone", back_populates="rate_plan_sms_usage")
 
 
 class RatePlanTierSMSUsage(db.Model):
@@ -231,8 +231,8 @@ class RatePlanTierSMSUsage(db.Model):
     sms_overage_mo = db.Column(db.Float)
     sms_overage_mo_unit = db.Column(db.String(256))
 
-    rate_plan_sms_usage_id = db.Column(db.Integer, db.ForeignKey('rate_plan_sms_usage.id'))
-    rate_plan_sms_usage = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_tier_sms_usage")
+    rate_plan_sms_usages_id = db.Column(db.Integer, db.ForeignKey('rate_plan_sms_usage.id'))
+    rate_plan_sms_usages = db.relationship("RatePlanSMSUsage", back_populates="rate_plan_tier_sms_usages")
 
 
 class RatePlanVoiceUsage(db.Model):
@@ -250,10 +250,10 @@ class RatePlanVoiceUsage(db.Model):
     use_these_data_rounding_settings_for_all_zones = db.Column(db.Boolean)
     voice_rounding_unit = db.Column(db.String(256))
 
-    rate_plan_tier_voice_usage = db.relationship("RatePlanTierVoiceUsage", back_populates="rate_plan_tier_voice_usage")
+    rate_plan_tier_voice_usages = db.relationship("RatePlanTierVoiceUsage", back_populates="rate_plan_voice_usages")
 
-    rate_plan_zone_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
-    rate_plan_zone = db.relationship("RatePlanVoiceUsage", back_populates="rate_plan_voice_usage")
+    rate_plan_zones_id = db.Column(db.Integer, db.ForeignKey('rate_plan_zone.id'))
+    rate_plan_zones = db.relationship("RatePlanZone", back_populates="rate_plan_voice_usage")
 
 
 class RatePlanTierVoiceUsage(db.Model):
@@ -266,8 +266,8 @@ class RatePlanTierVoiceUsage(db.Model):
     voice_overage = db.Column(db.Integer)
     voice_overage_unit = db.Column(db.String(256))
 
-    rate_plan_voice_usage_id = db.Column(db.Integer, db.ForeignKey('rate_plan_voice_usage.id'))
-    rate_plan_voice_usage = db.relationship("RatePlanTierVoiceUsage", back_populates="rate_plan_tier_voice_usage")
+    rate_plan_voice_usages_id = db.Column(db.Integer, db.ForeignKey('rate_plan_voice_usage.id'))
+    rate_plan_voice_usages = db.relationship("RatePlanVoiceUsage", back_populates="rate_plan_tier_voice_usages")
 
 
 class SubscriberIdentityModule(db.Model):
@@ -311,7 +311,7 @@ class SubscriberIdentityModule(db.Model):
     mec = db.Column(db.String(256))
 
     devices = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="sim")
-    data_usage_to_date = db.relationship("DataUsageToDate", back_populates="subscriber_identity_module")
+    data_usage_to_date = db.relationship("DataUsageToDate", back_populates="sim")
     rate_plans = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="sim")
 
     jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
@@ -325,7 +325,7 @@ class Device(db.Model):
     serial_number = db.Column(db.String(256))
     manufacture = db.Column(db.String(256))
     device_name = db.Column(db.String(256))
-    sims = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="device")
+    sims = db.relationship("AssociationBetweenSubscriberIdentityModuleDevice", back_populates="device")
 
 
 class DataUsageToDate(db.Model):
@@ -337,4 +337,4 @@ class DataUsageToDate(db.Model):
     date_updated = db.Column(db.DateTime())
 
     sim_id = db.Column(db.Integer, db.ForeignKey('subscriber_identity_module.id'))
-    sim = db.relationship("SubscriberIdentityModule", back_populates="DataUsageToDate")
+    sim = db.relationship("SubscriberIdentityModule", back_populates="data_usage_to_date")
