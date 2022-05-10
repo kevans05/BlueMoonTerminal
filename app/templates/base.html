@@ -5,7 +5,7 @@
     {% extends 'bootstrap/base.html' %}
 
     {% block title %}
-    {% if title %}{{ title }} - Teal Jasmine{% else %}Welcome to Blue Moon Terminal{% endif %}
+        {% if title %}{{ title }} - Teal Jasmine{% else %}Welcome to Blue Moon Terminal{% endif %}
     {% endblock %}
 
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap5.css">
@@ -13,7 +13,7 @@
 
     {% block navbar %}
         <nav class="navbar navbar-default">
-            <div class="container-fluid", style="width: 85%">
+            <div class="container-fluid" , style="width: 85%">
                 <div class="navbar-header">
                     {% if current_user.is_anonymous %}
                         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
@@ -35,39 +35,40 @@
                         <a class="navbar-brand">Blue Moon Terminal</a>
                     {% endif %}
                 </div>
-
-                <ul class="nav navbar-nav navbar-right">
+                <div class="nav navbar-nav navbar-right">
                     {% if current_user.is_anonymous %}
+                        <li><a href="{{ url_for('auth.register') }}">Sign Up</a></li>
                         <li><a href="{{ url_for('auth.login') }}">Login</a></li>
                     {% else %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button"
-                               aria-haspopup="true" aria-expanded="false">
-                                Jasper Settings
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ current_user.username }}
                             </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a href="{{ url_for('main.edit_profile', username=current_user.username) }}">Edit Profile</a></li>
+                                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                            </ul>
                         </li>
-                        <li><a href="{{ url_for('main.edit_profile', username=current_user.username) }}"></a></li>
-                        <li><a href="{{ url_for('auth.logout') }}"></a></li>
                     {% endif %}
-                </ul>
-
+                </div>
             </div>
         </nav>
     {% endblock %}
 
     {% block content %}
-    <div class="container-fluid", style="width: 85%">
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-info" role="alert">{{ message }}</div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
+        <div class="container-fluid" , style="width: 85%">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-info" role="alert">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-        {# application content needs to be provided in the app_content block #}
-        {% block app_content %}{% endblock %}
-    </div>
+            {# application content needs to be provided in the app_content block #}
+            {% block app_content %}{% endblock %}
+        </div>
     {% endblock %}
 
     {% block scripts %}

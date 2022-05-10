@@ -1,14 +1,13 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
-from flask_babel import _, lazy_gettext as _l
 from app.models import User
 
 
 class EditProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
-    email = StringField(_l('Email'), validators=[DataRequired(), Email()])
-    password = PasswordField(_l('New Password (Leave blank if no change)'))
+    email = StringField(Email, validators=[DataRequired(), Email()])
+    password = PasswordField('New Password (Leave blank if no change)')
     password2 = PasswordField(
         'Repeat New Password  (Leave blank if no change)', validators=[EqualTo('password')])
     current_password = PasswordField('Current Password', validators=[DataRequired()])
