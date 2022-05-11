@@ -42,3 +42,9 @@ def edit_profile():
         form.email.data = current_user.email
     return render_template('user.html', title='Edit Profile',
                            form=form)
+
+
+@bp.route('/jasper_api', methods=['GET', 'POST'])
+@login_required
+def jasper_api():
+    return render_template('jasper_api.html', title='Jasper APIs')

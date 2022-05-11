@@ -28,7 +28,7 @@
                     {% if current_user.is_anonymous %}
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link active" href="#">Jasper APIs</a>
+                            <a class="nav-link active"  href="{{ url_for('main.jasper_api', username=current_user.username) }}">Jasper APIs</a>
                         </li>
                     {% endif %}
                 </div>
