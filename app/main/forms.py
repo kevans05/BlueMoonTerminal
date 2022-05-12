@@ -22,3 +22,14 @@ class EditProfileForm(FlaskForm):
             user = User.query.filter_by(username=self.username.data).first()
             if user is not None:
                 raise ValidationError('Please use a different username.')
+
+
+class AddJasperAPIForm(FlaskForm):
+    username = StringField('Jasper username', validators=[DataRequired()])
+    api_key = PasswordField('Jasper API Key for User', validators=[DataRequired()])
+    resource_url = StringField('Resource URL', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+    def __init__(self, original_username, *args, **kwargs):
+        super(AddJasperAPIForm, self).__init__(*args, **kwargs)
+        self.original_username = original_username

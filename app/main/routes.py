@@ -3,9 +3,11 @@ from datetime import datetime
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_required
 
-from app import db
+import app
+from app import db, logger
+from app.models import User, JasperAccount, JasperCredential
 from app.main import bp
-from app.main.forms import EditProfileForm
+from app.main.forms import EditProfileForm, AddJasperAPIForm
 
 
 @bp.before_app_request
@@ -47,4 +49,10 @@ def edit_profile():
 @bp.route('/jasper_api', methods=['GET', 'POST'])
 @login_required
 def jasper_api():
-    return render_template('jasper_api.html', title='Jasper APIs')
+    form = AddJasperAPIForm(current_user.username)
+
+    available_apis = db.session.query(User).join(User.jasper_credential).all()
+    if form.validate_on_submit():
+
+
+    return render_template('jasper_api.html', title='Jasper APIs', form=form)

@@ -3,27 +3,46 @@
 
 {% block app_content %}
     <h1>Jasper APIs</h1>
+    <br>
+    <p>
+        <a class="btn btn-primary" data-toggle="collapse" href="#AddJasperAPI" role="button" aria-expanded="false" aria-controls="JasperAPIcollapse">
+            Add Jasper API
+        </a>
+        <a class="btn btn-primary" data-toggle="collapse" href="#ViewJasperAPI" role="button" aria-expanded="false" aria-controls="JasperAPIcollapse">
+            Exiting Jasper APIs
+        </a>
+    </p>
     <div class="row">
-        <div class="col-md-push-9">
-                <table class="dataTable display cell-border compact hover order-column stripe" style="width:100%"  id="jasper_api">
-                    <thead>
+        <div class="collapse" id="AddJasperAPI">
+            <div class="card card-body">
+                <div class="jumbotron jumbotron-fluid">
+                    {{ wtf.quick_form(form) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="collapse" id="ViewJasperAPI">
+            <div class="card card-body">
+                <div class="jumbotron jumbotron-fluid">
+                    <table class="dataTable display cell-border compact hover order-column stripe" style="width:100%"  id="ViewJasperAPITable">
+                        <thead>
                         <tr>
+                            <th>Status</th>
+                            <th>Cell Provider</th>
                             <th>Username</th>
                             <th>Resource URL</th>
-                            <th>Password</th>
-                            <th>Active</th>
+                            <th>API Key</th>
                             <th>Edit</th>
                         </tr>
-                    </thead>
-                    <tfoot>
-                        <tr>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                    </tfoot>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for configured_api in available_apis %}
+                                {% include '_current_jasper_apis.html' %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

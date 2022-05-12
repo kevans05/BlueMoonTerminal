@@ -84,6 +84,7 @@ class JasperAccount(db.Model):
     __tablename__ = "jasper_account"
     id = db.Column(db.Integer, primary_key=True)
     resource_url = db.Column(db.String(256))
+    cell_provider = db.Column(db.String(256))
 
     subscriber_identity_modules = db.relationship("SubscriberIdentityModule", back_populates="jasper_accounts")
 
