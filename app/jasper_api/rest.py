@@ -1,6 +1,7 @@
 from json import loads
 from requests import get
 
+
 def echo(username, api_key, resource_url):
     url = 'https://' + resource_url + '/rws/api/v1/echo/hello-world'
     my_response = get(url, auth=(username, api_key))
