@@ -54,7 +54,7 @@ def jasper_api():
 
     available_apis = db.session.query(User).join(User.jasper_credential).all()
     if form.validate_on_submit():
-        # echo_response = echo.apply_async(kwargs={"username":form.username.data, "api_key":form.api_key.data, "resource_url":form.resource_url.data})
-        # print(echo_response)
+        echo_response = echo.apply_async(kwargs={"username":form.username.data, "api_key":form.api_key.data, "resource_url":form.resource_url.data})
+        print(echo_response)
         print(form.data)
     return render_template('jasper_api.html', title='Jasper APIs', form=form)
