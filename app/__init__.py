@@ -23,6 +23,7 @@ logger.setLevel(logging.DEBUG)
 
 mail = Mail()
 
+
 def create_app_flask(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)

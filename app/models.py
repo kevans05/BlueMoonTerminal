@@ -104,7 +104,7 @@ class JasperCredential(db.Model):
     api_key = db.Column(db.String(256))
 
     jasper_accounts = db.relationship("JasperAccount", secondary=association_between_jasper_credential_jasper_account,
-                                     back_populates="jasper_credentials")
+                                      back_populates="jasper_credentials")
 
     users_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     users = db.relationship("User", back_populates="jasper_credential")

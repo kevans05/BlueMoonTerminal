@@ -6,9 +6,9 @@ from flask_login import current_user, login_required
 from app import db
 from app.models import User, JasperAccount, JasperCredential
 from app.main import bp
+from app.scheduler import echo
 from app.main.forms import EditProfileForm, AddJasperAPIForm
 
-from app.jasper_api.rest import echo
 
 
 @bp.before_app_request

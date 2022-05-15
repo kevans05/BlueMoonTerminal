@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
+from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, length, URL
 from app.models import User
 
 
@@ -26,8 +26,8 @@ class EditProfileForm(FlaskForm):
 
 class AddJasperAPIForm(FlaskForm):
     username = StringField('Jasper username', validators=[DataRequired()])
-    api_key = PasswordField('Jasper API Key for User', validators=[DataRequired()])
-    resource_url = StringField('Resource URL', validators=[DataRequired()])
+    api_key = PasswordField('Jasper API Key for User', validators=[DataRequired(), length(min=35, max=36,)])
+    resource_url = StringField('Resource URL', validators=[DataRequired(), URL(require_tld=True)])
     submit = SubmitField('Submit')
 
     def __init__(self, original_username, *args, **kwargs):
