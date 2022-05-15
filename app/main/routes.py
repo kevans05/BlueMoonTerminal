@@ -4,9 +4,9 @@ from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_required
 
 from app import db
-from app.models import User, JasperAccount, JasperCredential
+from app.models import User, JasperAccount, JasperCredential, Task
 from app.main import bp
-from app.scheduler import echo
+# from app.tasks import echo
 from app.main.forms import EditProfileForm, AddJasperAPIForm
 
 
@@ -54,7 +54,12 @@ def jasper_api():
 
     available_apis = db.session.query(User).join(User.jasper_credential).all()
     if form.validate_on_submit():
-        echo_response = echo.apply_async(kwargs={"username":form.username.data, "api_key":form.api_key.data, "resource_url":form.resource_url.data})
-        print(echo_response)
-        print(form.data)
+        # echo_response = echo.apply_async(kwargs={"username":form.username.data, "api_key":form.api_key.data, "resource_url":form.resource_url.data})
+        # task = Task(id=echo_response.id,name='echo-test',description="testing the users credentials", user=current_user)
+        # db.session.add(task)
+        jasper_credential = JasperCredential(username=form.username.data, api_key=form.api_key.data, users=current_user)
+        jasper_credential.jasper_accounts.append(JasperAccount(resource_url=form.resource_url.data))
+        db.session.add(jasper_credential)
+        db.session.commit()
+
     return render_template('jasper_api.html', title='Jasper APIs', form=form)
