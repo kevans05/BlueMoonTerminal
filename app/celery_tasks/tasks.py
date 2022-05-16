@@ -6,9 +6,10 @@ from requests import get
 
 from app.models import Task
 
+from app import celery
 
+# celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, result_backend=Config.CELERY_RESULT_BACKEND)
 
-celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, result_backend=Config.CELERY_RESULT_BACKEND)
 
 def _set_task_progress(progress):
     job = current_task

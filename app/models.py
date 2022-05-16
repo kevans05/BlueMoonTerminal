@@ -351,7 +351,7 @@ class Task(db.Model):
     complete = db.Column(db.Boolean, default=False)
 
     users_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    users = db.relationship("User", back_populates="tasks")
+    users = db.relationship("User", back_populates="celery_tasks")
 
     # def get_rq_job(self):
     #     try:

@@ -1,13 +1,13 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-from flask import Flask, request, current_app
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_mail import Mail
 from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
-from celery import Celery, current_task
+from celery import Celery
 from config import Config
 
 db = SQLAlchemy()
@@ -23,6 +23,8 @@ logger.setLevel(logging.DEBUG)
 
 mail = Mail()
 
+celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, result_backend=Config.CELERY_RESULT_BACKEND)
+
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -33,8 +35,7 @@ def create_app(config_class=Config):
     login.init_app(app)
     mail.init_app(app)
     bootstrap.init_app(app)
-
-
+    # celery.conf.update(app.config)
 
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)
@@ -44,6 +45,9 @@ def create_app(config_class=Config):
 
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
+
+    from app.celery_tasks import bp as tasks_bp
+    app.register_blueprint(tasks_bp)
 
     if not app.debug and not app.testing:
         if not os.path.exists('logs'):
