@@ -47,9 +47,6 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
 
-    # jasper_credential_id = db.Column(db.Integer, db.ForeignKey('jasper_credential.id'))
-    # jasper_credential = db.relationship("jasper_credential", back_populates="user")
-
     jasper_credential = db.relationship("JasperCredential", back_populates="users")
 
     tasks = db.relationship('Task', backref='user', lazy='dynamic')
@@ -92,11 +89,10 @@ class JasperAccount(db.Model):
 
     rate_plans = db.relationship("RatePlan", back_populates="jasper_account")
 
+    # jasper_credentials_id = db.Column(db.Integer, db.ForeignKey('JasperCredential.id'))
     jasper_credentials = db.relationship("JasperCredential",
                                          secondary=association_between_jasper_credential_jasper_account,
                                          back_populates="jasper_accounts")
-
-    # jasper_credentials = db.relationship("jasper_credential", back_populates="jasper_account")
 
 
 class JasperCredential(db.Model):
@@ -110,10 +106,6 @@ class JasperCredential(db.Model):
 
     users_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     users = db.relationship("User", back_populates="jasper_credential")
-
-    # jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
-    # jasper_account = db.relationship("jasper_account", back_populates="jasper_credentials")
-    # users = db.relationship("user", back_populates="jasper_credential")
 
 
 class RatePlan(db.Model):
