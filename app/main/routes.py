@@ -6,9 +6,8 @@ from flask_login import current_user, login_required
 from app import db
 from app.models import User, JasperAccount, JasperCredential, Task
 from app.main import bp
-# from app.celery_tasks import tasks
+from app.tasks import new_api_connection
 from app.main.forms import EditProfileForm, AddJasperAPIForm
-
 
 
 @bp.before_app_request
@@ -33,8 +32,8 @@ def edit_profile():
             flash('Invalid current password')
         else:
             current_user.username = form.username.data
-            current_user.email=form.email.data
-            if form.password.data !=  '':
+            current_user.email = form.email.data
+            if form.password.data != '':
                 current_user.set_password(form.password.data)
             db.session.add(current_user)
             db.session.commit()
@@ -54,9 +53,11 @@ def jasper_api():
 
     available_apis = db.session.query(User).join(User.jasper_credential).all()
     if form.validate_on_submit():
-        # echo_response = tasks.echo.apply_async(kwargs={"username":form.username.data, "api_key":form.api_key.data, "resource_url":form.resource_url.data})
-        # task = Task(id=echo_response.id,name='echo-test',description="testing the users credentials", user=current_user)
-        # db.session.add(task)
+        echo_response = new_api_connection.apply_async(kwargs={"username": form.username.data, "api_key": form.api_key.data,
+                                                 "resource_url": form.resource_url.data})
+        task = Task(id=echo_response.id, name='echo-test', description="testing the users credentials",
+                    user=current_user)
+        db.session.add(task)
         jasper_credential = JasperCredential(username=form.username.data, api_key=form.api_key.data, users=current_user)
         jasper_credential.jasper_accounts.append(JasperAccount(resource_url=form.resource_url.data))
         db.session.add(jasper_credential)

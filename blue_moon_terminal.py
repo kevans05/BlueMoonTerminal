@@ -1,5 +1,4 @@
 from app import create_app, db, cli
-import os
 
 app = create_app()
 cli.register(app)

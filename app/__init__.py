@@ -23,7 +23,7 @@ logger.setLevel(logging.DEBUG)
 
 mail = Mail()
 
-celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, result_backend=Config.CELERY_RESULT_BACKEND)
+celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, result_backend=Config.RESULT_BACKEND,include=['app.tasks'])
 
 
 def create_app(config_class=Config):
@@ -35,8 +35,14 @@ def create_app(config_class=Config):
     login.init_app(app)
     mail.init_app(app)
     bootstrap.init_app(app)
-    # celery.conf.update(app.config)
-
+    celery.conf.update(app.config)
+    celery.conf.beat_schedule = {
+        'add-every-30-seconds': {
+            'task': 'app.tasks.add',
+            'schedule': 30.0,
+            'args': (16, 16)
+        },
+    }
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)
 
@@ -45,9 +51,6 @@ def create_app(config_class=Config):
 
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
-
-    from app.celery_tasks import bp as tasks_bp
-    app.register_blueprint(tasks_bp)
 
     if not app.debug and not app.testing:
         if not os.path.exists('logs'):
