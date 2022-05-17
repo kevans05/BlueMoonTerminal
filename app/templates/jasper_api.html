@@ -32,12 +32,13 @@
                             <th>Username</th>
                             <th>Resource URL</th>
                             <th>API Key</th>
-                            <th>Edit</th>
                         </tr>
                         </thead>
                         <tbody>
                             {% for configured_api in available_apis %}
-                                {% include '_current_jasper_apis.html' %}
+                                {% for jasper_account in configured_api.jasper_accounts %}
+                                    {% include '_current_jasper_apis.html' %}
+                                {% endfor %}
                             {% endfor %}
                         </tbody>
                     </table>

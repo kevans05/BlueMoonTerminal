@@ -50,12 +50,8 @@ def edit_profile():
 @login_required
 def jasper_api():
     form = AddJasperAPIForm(current_user.username)
-    # Need to build an importer to show credits in account, and on the top bar.
-    # x = current_user.jasper_credential
-    # for y in x:
-    #     print(y)
-    #     for q in y.jasper_accounts:
-    #         print(q)
+    jasper_credentials = current_user.jasper_credential
+
     if form.validate_on_submit():
         echo_response = new_api_connection.apply_async(kwargs={"username": form.username.data, "api_key": form.api_key.data,
                                                  "resource_url": form.resource_url.data, "current_user_id": current_user.id})
@@ -64,4 +60,4 @@ def jasper_api():
         db.session.add(task)
         db.session.commit()
 
-    return render_template('jasper_api.html', title='Jasper APIs', form=form)
+    return render_template('jasper_api.html', title='Jasper APIs', form=form, available_apis=jasper_credentials)
