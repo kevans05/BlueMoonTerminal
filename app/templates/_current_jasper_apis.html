@@ -1,5 +1,11 @@
 <tr>
-    <th></th>
+    <th>
+    {% if ((configured_api.last_check - configured_api.last_confirmed) - (jasper_account.last_check - jasper_account.last_confirmed)) | int == 0 %}
+        ACTIVE
+        {% else %}
+        NOT ACTIVE
+        {%  endif %}
+    </th>
     <th></th>
     <th>{{ configured_api.username }}</th>
     <th>{{ jasper_account.resource_url }}</th>

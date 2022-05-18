@@ -84,12 +84,15 @@ class JasperAccount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     resource_url = db.Column(db.String(256))
     cell_provider = db.Column(db.String(256))
+    #nickname = db.Column(db.String(256))
+
+    last_check = db.Column(db.DateTime())
+    last_confirmed = db.Column(db.DateTime())
 
     subscriber_identity_modules = db.relationship("SubscriberIdentityModule", back_populates="jasper_accounts")
 
     rate_plans = db.relationship("RatePlan", back_populates="jasper_account")
 
-    # jasper_credentials_id = db.Column(db.Integer, db.ForeignKey('JasperCredential.id'))
     jasper_credentials = db.relationship("JasperCredential",
                                          secondary=association_between_jasper_credential_jasper_account,
                                          back_populates="jasper_accounts")
@@ -100,6 +103,9 @@ class JasperCredential(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(256))
     api_key = db.Column(db.String(256))
+
+    last_check = db.Column(db.DateTime())
+    last_confirmed = db.Column(db.DateTime())
 
     jasper_accounts = db.relationship("JasperAccount", secondary=association_between_jasper_credential_jasper_account,
                                       back_populates="jasper_credentials")
@@ -119,7 +125,7 @@ class RatePlan(db.Model):
     version = db.Column(db.Integer)
     status = db.Column(db.String(256))
     type = db.Column(db.String(256))
-    subscription_charge = db.Column(db.Integer)
+    subscription_charge = db.Column(db.Float)
     number_of_tires = db.Column(db.Integer)
     tier_treatment = db.Column(db.String(256))
     expire_term_based_on_usage = db.Column(db.Boolean)
@@ -142,7 +148,7 @@ class RatePlanTierCost(db.Model):
     tier_level = db.Column(db.Integer)
     subscriber_threshold = db.Column(db.Integer)
     subscriber_capacity = db.Column(db.String(256))
-    per_subscriber_charge = db.Column(db.Integer)
+    per_subscriber_charge = db.Column(db.Float)
 
     rate_plan_id = db.Column(db.Integer, db.ForeignKey('rate_plan.id'))
     rate_plan = db.relationship("RatePlan", back_populates="rate_plan_tiers")
@@ -208,7 +214,7 @@ class RatePlanSMSUsage(db.Model):
     pool_sms_mo_usage = db.Column(db.Boolean)
     pool_sms_mt_usage = db.Column(db.Boolean)
     included_smsmo = db.Column(db.Boolean)
-    included_sms_mo_unit = db.Column(db.Boolean)
+    included_sms_mo_unit = db.Column(db.String(256))
 
     rate_plan_tier_sms_usages = db.relationship("RatePlanTierSMSUsage", back_populates="rate_plan_sms_usages")
 
