@@ -6,7 +6,7 @@ from flask_login import current_user, login_required
 from app import db
 from app.models import User, JasperAccount, JasperCredential, Task
 from app.main import bp
-from app.tasks import new_api_connection, new_rate_plans, new_get_iccids
+from app.tasks import new_api_connection, new_rate_plans, new_get_iccids, update_iccids
 from app.main.forms import EditProfileForm, AddJasperAPIForm
 
 
@@ -66,6 +66,9 @@ def jasper_api():
         db.session.add(task)
         db.session.commit()
         new_get_iccids.apply_async(
+            kwargs={"username": form.username.data, "api_key": form.api_key.data,
+                    "resource_url": form.resource_url.data})
+        update_iccids.apply_async(
             kwargs={"username": form.username.data, "api_key": form.api_key.data,
                     "resource_url": form.resource_url.data})
     return render_template('jasper_api.html', title='Jasper APIs', form=form, available_apis=jasper_credentials)

@@ -185,11 +185,35 @@ def new_get_iccids(username, api_key, resource_url):
     jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()
     for rate in RatePlan.query.all():
         list_of_imei = rest.get_usage_by_rate_plan(username, api_key, resource_url, rate.name)
-        for imei in list_of_imei:
-            subscriber_identity_module = SubscriberIdentityModule.query.filter_by(imei=imei['imei']).first()
+        for iccid in list_of_imei:
+            subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
             if subscriber_identity_module is None:
-                jasper_account.subscriber_identity_modules.append(SubscriberIdentityModule(imei=imei['imei']))
+                jasper_account.subscriber_identity_modules.append(SubscriberIdentityModule(imei=iccid['iccid']))
     db.session.add(jasper_account)
     db.session.commit()
 
 
+@celery.task()
+def update_iccids(username, api_key, resource_url):
+    jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()
+    for x in jasper_account.subscriber_identity_modules:
+        jasper = rest.get_iccid_info(username, api_key, resource_url, x.imei)
+        jasper_account.update({'imsi':jasper['imsi'], 'msisdn':jasper['msisdn'] ,'status':jasper['status']
+                                  , 'communication_plan':jasper['communicationPlan']
+        , 'date_activated': datetime.datetime.strptime(jasper['dateActivated'], '%Y-%m-%d %H:%M:%S.%3N%z')
+        , 'date_added':jasper['dateAdded'] , 'date_updated':jasper['dateUpdated'] , 'date_shipped':jasper['dateShipped']
+        , 'account_id':jasper['accountId'] , jasper['fixedIPAddress'] , jasper['operatorCustom1']
+        , jasper['operatorCustom2'] , jasper['operatorCustom3'] , jasper['operatorCustom4']
+        , jasper['operatorCustom5'] , jasper['accountCustom1'] , jasper['accountCustom2']
+        , jasper['accountCustom3'] , jasper['accountCustom4'] , jasper['accountCustom5']
+        , jasper['accountCustom6'] , jasper['accountCustom7'] , jasper['accountCustom8']
+        , jasper['accountCustom9'] , jasper['accountCustom10'] , jasper['customerCustom1']
+        , jasper['customerCustom2'] , jasper['customerCustom3']
+        , jasper['customerCustom4'] , jasper['customerCustom5'] , jasper['simNotes']
+        , jasper['euiccid'] , jasper['deviceID'] , jasper['modemID']
+        , jasper['globalSimType'] , jasper['mec'] })
+    db.session.commit()
+
+
+#                 datetime.datetime.strptime('2019-01-26 12:01:17.068+0000', '%Y-%m-%d %H:%M:%S.%3N%z')
+#  {'iccid': '89302690201004801075', 'imsi': '302690500222835', 'msisdn': '16479084795', 'imei': '3589420542722502', 'status': 'ACTIVATED', 'ratePlan': 'London Hydro Modem Share 500KB', 'communicationPlan': 'London Hydro Comm Plan 1', 'customer': 'EMD BU 80', 'endConsumerId': None, 'dateActivated': '2019-01-26 12:01:17.068+0000', 'dateAdded': '2018-01-30 21:42:21.481+0000', 'dateUpdated': '2022-03-31 17:41:35.287+0000', 'dateShipped': '2018-03-13 14:17:24.358+0000', 'accountId': '100025813', 'fixedIPAddress': '172.17.3.225', 'operatorCustom1': 'ON', 'operatorCustom2': 'London Hydro inc', 'operatorCustom3': '100025813', 'operatorCustom4': '260914', 'operatorCustom5': '0100491949', 'accountCustom1': '', 'accountCustom2': '', 'accountCustom3': '', 'accountCustom4': '', 'accountCustom5': '', 'accountCustom6': '', 'accountCustom7': '', 'accountCustom8': '', 'accountCustom9': '', 'accountCustom10': '', 'customerCustom1': '', 'customerCustom2': '', 'customerCustom3': '', 'customerCustom4': '', 'customerCustom5': '', 'simNotes': None, 'euiccid': None, 'deviceID': None, 'modemID': 'MV90-Digi{MeterNumber:701312', 'globalSimType': 'NONE', 'mec': None}

@@ -274,6 +274,7 @@ class RatePlanTierVoiceUsage(db.Model):
 class SubscriberIdentityModule(db.Model):
     __tablename__ = "subscriber_identity_module"
     id = db.Column(db.Integer, primary_key=True)
+    iccid = db.Column(db.String(256))
     imei = db.Column(db.String(256))
     imsi = db.Column(db.String(256))
     msisdn = db.Column(db.String(256))
@@ -285,6 +286,7 @@ class SubscriberIdentityModule(db.Model):
     date_updated = db.Column(db.DateTime())
     date_shipped = db.Column(db.DateTime())
     account_id = db.Column(db.String(256))
+    fixed_ip_address = db.Column(db.String(256))
     operator_custom1 = db.Column(db.String(256))
     operator_custom2 = db.Column(db.String(256))
     operator_custom3 = db.Column(db.String(256))

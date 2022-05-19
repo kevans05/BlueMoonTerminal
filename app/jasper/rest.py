@@ -41,7 +41,7 @@ def get_usage_by_rate_plan(username, apikey, url_hearer, rate_plan):
             data = loads(response.content)
             for zones in data['zones']:
                 for devices in zones['devices']:
-                    iemi_list.append({"imei": devices['deviceId'], "dataUsage": devices['usage']['dataUsage'],
+                    iemi_list.append({"iccid": devices['deviceId'], "dataUsage": devices['usage']['dataUsage'],
                                       "smsMOUsage": devices['usage']['smsMOUsage'],
                                       "smsMTUsage": devices['usage']['smsMTUsage'],
                                       "voiceMOUsage": devices['usage']['voiceMOUsage'],
@@ -51,3 +51,11 @@ def get_usage_by_rate_plan(username, apikey, url_hearer, rate_plan):
             if data['lastPage']:
                 break
     return iemi_list
+
+
+def get_iccid_info(username, apikey, url_hearer, iccid):
+    url = url_hearer + '/rws/api/v1/devices/' + iccid
+    response = get(url, auth=(username, apikey))
+    if response.ok:
+        data = loads(response.content)
+        return data
