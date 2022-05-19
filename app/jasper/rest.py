@@ -10,7 +10,7 @@ from urllib.parse import quote
 def echo(username, api_key, resource_url):
     url = resource_url + '/rws/api/v1/echo/hello-world'
     response = get(url, auth=(username, api_key))
-    if response:
+    if response.ok:
         return "data", loads(response.content)
     else:
         return "error", response.status_code
@@ -21,10 +21,9 @@ def get_rate_plan(username, apikey, url_hearer):
     response = get(url, auth=(username, apikey))
 
     if response.ok:
-        data = loads(response.content)
-        return (data['ratePlans'])
+        return "data", loads(response.content)['ratePlans']
     else:
-        return "error"
+        return "error", response.status_code
 
 
 def get_usage_by_rate_plan(username, apikey, url_hearer, rate_plan):
@@ -39,6 +38,7 @@ def get_usage_by_rate_plan(username, apikey, url_hearer, rate_plan):
         response = get(url, auth=(username, apikey))
         if response.ok:
             data = loads(response.content)
+            print(data)
             for zones in data['zones']:
                 for devices in zones['devices']:
                     iemi_list.append({"iccid": devices['deviceId'], "dataUsage": devices['usage']['dataUsage'],
@@ -49,8 +49,7 @@ def get_usage_by_rate_plan(username, apikey, url_hearer, rate_plan):
                                       "date_updated": datetime.datetime.now()})
 
             if data['lastPage']:
-                break
-    return iemi_list
+                return "data", iemi_list
 
 
 def get_iccid_info(username, apikey, url_hearer, iccid):
@@ -58,4 +57,6 @@ def get_iccid_info(username, apikey, url_hearer, iccid):
     response = get(url, auth=(username, apikey))
     if response.ok:
         data = loads(response.content)
-        return data
+        return "data",  data
+    else:
+        return "error", response.status_code

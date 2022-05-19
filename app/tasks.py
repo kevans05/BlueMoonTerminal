@@ -15,60 +15,46 @@ def finish_task():
     db.session.commit()
 
 
-def jasper_true_or_false(toChange):
-    if toChange == 'true':
+def jasper_true_or_false(to_change):
+    if to_change == 'true':
         return True
     else:
         return False
 
 
 @celery.task()
-def check_api_connections():
-    jasper_credentials = JasperCredential.query.all()
-    for credential in jasper_credentials:
-        datetime_stamp = datetime.now()
-        credential.last_check = datetime_stamp
-        for account in credential.jasper_accounts:
-            account.last_check = datetime_stamp
-            response = rest.echo(credential.username, credential.api_key, account.resource_url)
-            if response[0] == "error":
-                db.session.commit()
-            elif response[0] == "data":
-                credential.last_confirmed = datetime_stamp
-                account.last_confirmed = datetime_stamp
-                db.session.commit()
-
-
-@celery.task()
-def new_api_connection(username, api_key, resource_url, current_user_id):
+def add_api_connections(username, api_key, resource_url, current_user_id):
     response = rest.echo(username, api_key, resource_url)
-    if response[0] == "error":
-        flash("API Connection Error")
-    elif response[0] == "data":
+    datetime_stamp = datetime.now()
+    if response[0] == "data":
         user = User.query.filter_by(id=current_user_id).first()
+
         jasper_credential = JasperCredential.query.filter_by(api_key=api_key, username=username).first()
+
         if jasper_credential is None:
-            jasper_credential = JasperCredential(username=username, api_key=api_key, users=user)
-        jasper_credential.last_check = datetime.now()
-        jasper_credential.last_confirmed = datetime.now()
+            jasper_credential = JasperCredential(username=username, api_key=api_key, users=user,
+                                                 last_check=datetime_stamp, last_confirmed=datetime_stamp)
+
         jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()
         if jasper_account is None:
-            jasper_credential.jasper_accounts.append(JasperAccount(resource_url=resource_url, last_check = datetime.now(), last_confirmed = datetime.now()))
+            jasper_credential.jasper_accounts.append(JasperAccount(resource_url=resource_url,
+                                                                   last_check=datetime_stamp,
+                                                                   last_confirmed=datetime_stamp))
         else:
             jasper_account.last_check = datetime.now()
             jasper_account.last_confirmed = datetime.now()
         db.session.add(jasper_credential)
         db.session.commit()
-    finish_task()
 
 
 @celery.task()
-def new_rate_plans(username, api_key, resource_url):
+def add_rate_plans(username, api_key, resource_url):
     response = rest.get_rate_plan(username, api_key, resource_url)
-    if response == "error":
+    if response[0] == "error":
+        # finish_task()
         flash("rate plan download Error")
-    else:
-        for plans in response:
+    elif response[0] == "data":
+        for plans in response[1]:
             rate_plan = RatePlan.query.filter_by(version_id=plans['versionId'], name=plans['name']).first()
             if rate_plan is None:
                 rate_plan = RatePlan(name=plans['name'], plan_id=plans['id'], account_name=plans['accountName'],
@@ -177,18 +163,19 @@ def new_rate_plans(username, api_key, resource_url):
                 rate_plan.rate_plan_zones.append(rate_plan_zone)
                 db.session.add(rate_plan)
                 db.session.commit()
-            finish_task()
+            # finish_task()
 
 
 @celery.task()
-def new_get_iccids(username, api_key, resource_url):
+def get_iccids(username, api_key, resource_url):
     jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()
     for rate in RatePlan.query.all():
-        list_of_imei = rest.get_usage_by_rate_plan(username, api_key, resource_url, rate.name)
-        for iccid in list_of_imei:
-            subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
-            if subscriber_identity_module is None:
-                jasper_account.subscriber_identity_modules.append(SubscriberIdentityModule(imei=iccid['iccid']))
+        list_of_iccid = rest.get_usage_by_rate_plan(username, api_key, resource_url, rate.name)
+        if list_of_iccid[0] == "data":
+            for iccid in list_of_iccid[1]:
+                subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
+                if subscriber_identity_module is None:
+                    jasper_account.subscriber_identity_modules.append(SubscriberIdentityModule(iccid=iccid['iccid']))
     db.session.add(jasper_account)
     db.session.commit()
 
@@ -196,24 +183,41 @@ def new_get_iccids(username, api_key, resource_url):
 @celery.task()
 def update_iccids(username, api_key, resource_url):
     jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()
-    for x in jasper_account.subscriber_identity_modules:
-        jasper = rest.get_iccid_info(username, api_key, resource_url, x.imei)
-        jasper_account.update({'imsi':jasper['imsi'], 'msisdn':jasper['msisdn'] ,'status':jasper['status']
-                                  , 'communication_plan':jasper['communicationPlan']
-        , 'date_activated': datetime.datetime.strptime(jasper['dateActivated'], '%Y-%m-%d %H:%M:%S.%3N%z')
-        , 'date_added':jasper['dateAdded'] , 'date_updated':jasper['dateUpdated'] , 'date_shipped':jasper['dateShipped']
-        , 'account_id':jasper['accountId'] , jasper['fixedIPAddress'] , jasper['operatorCustom1']
-        , jasper['operatorCustom2'] , jasper['operatorCustom3'] , jasper['operatorCustom4']
-        , jasper['operatorCustom5'] , jasper['accountCustom1'] , jasper['accountCustom2']
-        , jasper['accountCustom3'] , jasper['accountCustom4'] , jasper['accountCustom5']
-        , jasper['accountCustom6'] , jasper['accountCustom7'] , jasper['accountCustom8']
-        , jasper['accountCustom9'] , jasper['accountCustom10'] , jasper['customerCustom1']
-        , jasper['customerCustom2'] , jasper['customerCustom3']
-        , jasper['customerCustom4'] , jasper['customerCustom5'] , jasper['simNotes']
-        , jasper['euiccid'] , jasper['deviceID'] , jasper['modemID']
-        , jasper['globalSimType'] , jasper['mec'] })
-    db.session.commit()
+    for sim in jasper_account.subscriber_identity_modules:
+        response = rest.get_iccid_info(username, api_key, resource_url, sim.iccid)
+        if response[0] == "data":
+            # jasper_account.update({'imei':response[1]['imei']})
+            SubscriberIdentityModule.query.filter_by(iccid=sim.iccid). \
+                update({'imei': response[1]['imei'], 'imsi': response[1]['imsi'], 'msisdn': response[1]['msisdn'],
+                        'status': response[1]['status'],
+                        'date_activated': datetime.strptime(response[1]['dateActivated'], '%Y-%m-%d %H:%M:%S.%f%z'),
+                        'date_added': datetime.strptime(response[1]['dateAdded'], '%Y-%m-%d %H:%M:%S.%f%z'),
+                        'date_updated': datetime.strptime(response[1]['dateUpdated'], '%Y-%m-%d %H:%M:%S.%f%z'),
+                        'date_shipped': datetime.strptime(response[1]['dateShipped'], '%Y-%m-%d %H:%M:%S.%f%z'),
+                        'communication_plan': response[1]['communicationPlan'],
+                        'account_id': response[1]['accountId'], 'fixed_ip_address': response[1]['fixedIPAddress'],
+                        'operator_custom1': response[1]['operatorCustom1'],
+                        'operator_custom2': response[1]['operatorCustom1'],
+                        'operator_custom3': response[1]['operatorCustom3'],
+                        'operator_custom4': response[1]['operatorCustom4'],
+                        'account_custom1': response[1]['accountCustom1'],
+                        'account_custom2': response[1]['accountCustom2'],
+                        'account_custom3': response[1]['accountCustom3'],
+                        'account_custom4': response[1]['accountCustom4'],
+                        'account_custom5': response[1]['accountCustom5'],
+                        'account_custom6': response[1]['accountCustom6'],
+                        'account_custom7': response[1]['accountCustom7'],
+                        'account_custom8': response[1]['accountCustom8'],
+                        'account_custom9': response[1]['accountCustom9'],
+                        'account_custom10': response[1]['accountCustom10'],
+                        'customer_custom1': response[1]['customerCustom1'],
+                        'customer_custom2': response[1]['customerCustom2'],
+                        'customer_custom3': response[1]['customerCustom3'],
+                        'customer_custom4': response[1]['customerCustom4'],
+                        'customer_custom5': response[1]['customerCustom5'], 'sim_notes': response[1]['simNotes'],
+                        'euiccid': response[1]['euiccid'], 'device_id': response[1]['deviceID'],
+                        'modem_id': response[1]['modemID'],
+                        'global_sim_type': response[1]['globalSimType'], 'mec': response[1]['mec']})
+            db.session.commit()
 
 
-#                 datetime.datetime.strptime('2019-01-26 12:01:17.068+0000', '%Y-%m-%d %H:%M:%S.%3N%z')
-#  {'iccid': '89302690201004801075', 'imsi': '302690500222835', 'msisdn': '16479084795', 'imei': '3589420542722502', 'status': 'ACTIVATED', 'ratePlan': 'London Hydro Modem Share 500KB', 'communicationPlan': 'London Hydro Comm Plan 1', 'customer': 'EMD BU 80', 'endConsumerId': None, 'dateActivated': '2019-01-26 12:01:17.068+0000', 'dateAdded': '2018-01-30 21:42:21.481+0000', 'dateUpdated': '2022-03-31 17:41:35.287+0000', 'dateShipped': '2018-03-13 14:17:24.358+0000', 'accountId': '100025813', 'fixedIPAddress': '172.17.3.225', 'operatorCustom1': 'ON', 'operatorCustom2': 'London Hydro inc', 'operatorCustom3': '100025813', 'operatorCustom4': '260914', 'operatorCustom5': '0100491949', 'accountCustom1': '', 'accountCustom2': '', 'accountCustom3': '', 'accountCustom4': '', 'accountCustom5': '', 'accountCustom6': '', 'accountCustom7': '', 'accountCustom8': '', 'accountCustom9': '', 'accountCustom10': '', 'customerCustom1': '', 'customerCustom2': '', 'customerCustom3': '', 'customerCustom4': '', 'customerCustom5': '', 'simNotes': None, 'euiccid': None, 'deviceID': None, 'modemID': 'MV90-Digi{MeterNumber:701312', 'globalSimType': 'NONE', 'mec': None}
