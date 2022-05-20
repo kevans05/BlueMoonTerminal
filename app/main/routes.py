@@ -63,8 +63,8 @@ def jasper_api():
                                           "resource_url": form.resource_url.data}, queue='D')
     return render_template('jasper_api.html', title='Jasper APIs', form=form, available_apis=jasper_credentials)
 
-@bp.route('/jasper_', methods=['GET', 'POST'])
+@bp.route('/<token>/sim', methods=['GET', 'POST'])
 @login_required
-def jasper_api():
+def subscriber_identity_module (token):
     form = AddJasperAPIForm(current_user.username)
     jasper_credentials = current_user.jasper_credential

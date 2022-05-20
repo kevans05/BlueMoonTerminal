@@ -42,7 +42,7 @@
                                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                         <li><a href="#">API Connection</a></li>
                                         <li><a href="#">Rate Plan</a></li>
-                                        <li><a href="#">Subscriber Identity Module</a></li>
+                                        <li><a href="{{ url_for('main.subscriber_identity_module', token=account.get_id_token() ) }}">Subscriber Identity Module</a></li>
                                         <li><a href="#">Devices</a> </li>
                                     </ul>
                                 </li>

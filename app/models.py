@@ -97,6 +97,20 @@ class JasperAccount(db.Model):
                                          secondary=association_between_jasper_credential_jasper_account,
                                          back_populates="jasper_accounts")
 
+    def get_id_token(self, expires_in=1800):
+        return jwt.encode(
+            {'get_id_token': self.id, 'exp': time() + expires_in},
+            current_app.config['SECRET_KEY'], algorithm='HS256')
+
+    @staticmethod
+    def verify_id_token(token):
+        try:
+            id = jwt.decode(token, current_app.config['SECRET_KEY'],
+                            algorithms=['HS256'])['get_id_token']
+        except:
+            return
+        return JasperAccount.query.get(id)
+
 
 class JasperCredential(db.Model):
     __tablename__ = "jasper_credential"
