@@ -5,6 +5,7 @@ from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from sqlalchemy import func
 from app import db, login
 
 association_between_jasper_credential_jasper_account = db.Table('association_between_jasper_credential_jasper_account',
@@ -77,6 +78,11 @@ class User(UserMixin, db.Model):
         except:
             return
         return User.query.get(id)
+
+    def number_of_jasper_credential(self):
+        #x = JasperCredential.query.filter_by(users_id=self.id).all()
+        x = JasperCredential.query.all()
+        return func.count(x)
 
 
 class JasperAccount(db.Model):

@@ -22,6 +22,8 @@ def before_request():
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
 def index():
+    print(current_user.username)
+    print(current_user.number_of_jasper_credential())
     return render_template('index.html', title='Home')
 
 

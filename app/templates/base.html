@@ -32,22 +32,22 @@
                                href="{{ url_for('main.jasper_api', username=current_user.username) }}">Jasper APIs</a>
 
                         </li>
-                        {% for credential in current_user.jasper_credential %}
-                            {% for account in credential.jasper_accounts %}
-                                <li class="nav-item dropdown show">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                                       data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-expanded="true">
-                                        {{ account.resource_url }} ▼
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                        <li><a href="#">API Connection</a></li>
-                                        <li><a href="#">Rate Plan</a></li>
-                                        <li><a href="{{ url_for('main.subscriber_identity_module', token=account.get_id_token() ) }}">Subscriber Identity Module</a></li>
-                                        <li><a href="#">Devices</a> </li>
-                                    </ul>
-                                </li>
+                            {% for credential in current_user.jasper_credential %}
+                                {% for account in credential.jasper_accounts %}
+                                    <li class="nav-item dropdown show">
+                                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                           data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-expanded="true">
+                                            {{ account.resource_url }} ▼
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                            <li><a href="#">API Connection</a></li>
+                                            <li><a href="#">Rate Plan</a></li>
+                                            <li><a href="{{ url_for('main.subscriber_identity_module', token=account.get_id_token() ) }}">Subscriber Identity Module</a></li>
+                                            <li><a href="#">Devices</a> </li>
+                                        </ul>
+                                    </li>
+                                {% endfor %}
                             {% endfor %}
-                        {% endfor %}
                     {% endif %}
                 </div>
                 <div class="nav navbar-nav navbar-right">

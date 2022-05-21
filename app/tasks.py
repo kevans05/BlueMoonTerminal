@@ -161,11 +161,12 @@ def add_rate_plans(username, api_key, resource_url):
                         rate_plan_voice_usage.rate_plan_tier_voice_usages.append(rate_plan_tier_voice_usage)
                     rate_plan_zone.rate_plan_voice_usage.append(rate_plan_voice_usage)
                 rate_plan.rate_plan_zones.append(rate_plan_zone)
-                db.session.add(rate_plan)
+                jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()
+                jasper_account.append(rate_plan)
                 db.session.commit()
             # finish_task()
 
-
+#bad code
 @celery.task()
 def get_iccids(username, api_key, resource_url):
     jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()

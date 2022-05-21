@@ -47,9 +47,17 @@ def create_app(config_class=Config):
     #     },
     # }
     celery.conf.beat_schedule = {
-        'add-every-30-seconds': {
+        'add-every-1-hour': {
             'task': 'app.tasks_beat_schedule.beat_schedule_check_sims_connections',
-            'schedule': 30.0, 'options': {'queue' : 'A'}
+            'schedule': 3600.0, 'options': {'queue' : 'A'}
+        },
+        'add-every-5-minutes': {
+            'task': 'app.tasks_beat_schedule.beat_schedule_check_api_connections',
+            'schedule': 300.0, 'options': {'queue': 'E'}
+        },
+        'add-every-5-minutes': {
+            'task': 'app.tasks_beat_schedule.beat_schedule_check_usage_a',
+            'schedule': 30.0, 'options': {'queue': 'B'}
         },
     }
     from app.errors import bp as errors_bp
