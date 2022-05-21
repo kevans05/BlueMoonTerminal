@@ -22,8 +22,6 @@ def before_request():
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
 def index():
-    print(current_user.username)
-    print(current_user.number_of_jasper_credential())
     return render_template('index.html', title='Home')
 
 
@@ -54,8 +52,6 @@ def edit_profile():
 @login_required
 def jasper_api():
     form = AddJasperAPIForm(current_user.username)
-    jasper_credentials = current_user.jasper_credential
-
     if form.validate_on_submit():
         add_api_connections.apply_async(kwargs={"username": form.username.data, "api_key": form.api_key.data,
                                           "resource_url": form.resource_url.data, "current_user_id":current_user.id}, queue='A')
@@ -65,6 +61,10 @@ def jasper_api():
                                           "resource_url": form.resource_url.data}, queue='C')
         update_iccids.apply_async(kwargs={"username": form.username.data, "api_key": form.api_key.data,
                                           "resource_url": form.resource_url.data}, queue='D')
+    if current_user.number_of_jasper_credential() >= 1:
+        jasper_credentials = current_user.jasper_credential
+    else:
+        jasper_credentials = None
     return render_template('jasper_api.html', title='Jasper APIs', form=form, available_apis=jasper_credentials)
 
 

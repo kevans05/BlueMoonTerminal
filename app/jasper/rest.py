@@ -60,3 +60,15 @@ def get_iccid_info(username, apikey, url_hearer, iccid):
         return "data",  data
     else:
         return "error", response.status_code
+
+
+def get_cycle_to_date(username, apikey, url_hearer, iccid):
+    url_a = url_hearer + "/rws/api/v1/devices/"
+    url_b = "/ctdUsages"
+    url = url_a + iccid + url_b
+    response = get(url, auth=(username, apikey))
+    if response.ok:
+        data = loads(response.content)
+        return "data",  data
+    else:
+        return "error", response.status_code

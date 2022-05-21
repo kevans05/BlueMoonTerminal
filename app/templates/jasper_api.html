@@ -15,10 +15,12 @@
                     Add Jasper API
                 </a>
                 <br>
-                <a class="btn btn-primary" data-toggle="collapse" href="#ViewJasperAPI" role="button"
-                   aria-expanded="false" aria-controls="JasperAPIcollapse">
-                    Exiting Jasper APIs
-                </a>
+                {% if available_apis is not none %}
+                    <a class="btn btn-primary" data-toggle="collapse" href="#ViewJasperAPI" role="button"
+                       aria-expanded="false" aria-controls="JasperAPIcollapse">
+                        Exiting Jasper APIs
+                    </a>
+                {% endif %}
             </div>
             <div class="col-sm-10">
                 <div class="collapse" id="AddJasperAPI">
@@ -44,11 +46,13 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for configured_api in available_apis %}
-                                    {% for jasper_account in configured_api.jasper_accounts %}
-                                        {% include '_current_jasper_apis.html' %}
+                                {% if available_apis is not none %}
+                                    {% for configured_api in available_apis %}
+                                        {% for jasper_account in configured_api.jasper_accounts %}
+                                            {% include '_current_jasper_apis.html' %}
+                                        {% endfor %}
                                     {% endfor %}
-                                {% endfor %}
+                                {% endif %}
                                 </tbody>
                             </table>
                         </div>

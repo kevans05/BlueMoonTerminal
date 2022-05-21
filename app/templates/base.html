@@ -32,6 +32,7 @@
                                href="{{ url_for('main.jasper_api', username=current_user.username) }}">Jasper APIs</a>
 
                         </li>
+                        {% if current_user.number_of_jasper_credential() >= 1 %}
                             {% for credential in current_user.jasper_credential %}
                                 {% for account in credential.jasper_accounts %}
                                     <li class="nav-item dropdown show">
@@ -48,6 +49,7 @@
                                     </li>
                                 {% endfor %}
                             {% endfor %}
+                        {% endif %}
                     {% endif %}
                 </div>
                 <div class="nav navbar-nav navbar-right">

@@ -162,7 +162,7 @@ def add_rate_plans(username, api_key, resource_url):
                     rate_plan_zone.rate_plan_voice_usage.append(rate_plan_voice_usage)
                 rate_plan.rate_plan_zones.append(rate_plan_zone)
                 jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()
-                jasper_account.append(rate_plan)
+                jasper_account.rate_plans.append(rate_plan)
                 db.session.commit()
             # finish_task()
 

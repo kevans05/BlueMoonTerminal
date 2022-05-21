@@ -80,9 +80,7 @@ class User(UserMixin, db.Model):
         return User.query.get(id)
 
     def number_of_jasper_credential(self):
-        #x = JasperCredential.query.filter_by(users_id=self.id).all()
-        x = JasperCredential.query.all()
-        return func.count(x)
+        return db.session.query(func.count(JasperCredential.id)).filter_by(users_id=self.id).scalar()
 
 
 class JasperAccount(db.Model):
