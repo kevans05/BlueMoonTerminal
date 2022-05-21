@@ -26,3 +26,11 @@ def beat_schedule_check_api_connections():
                 account.last_confirmed = datetime_stamp
                 db.session.commit()
 
+
+@celery.task()
+def beat_schedule_check_sims_connections():
+    jasper_account = JasperAccount.query.all()
+    for accounts in jasper_account:
+        for sims in accounts.subscriber_identity_modules:
+            print(sims)
+            print(accounts.jasper_credentials)

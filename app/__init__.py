@@ -23,7 +23,8 @@ logger.setLevel(logging.DEBUG)
 
 mail = Mail()
 
-celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, result_backend=Config.RESULT_BACKEND,include=['app.tasks'])
+celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, result_backend=Config.RESULT_BACKEND, include=['app.tasks'
+    , 'app.tasks_beat_schedule'])
 
 
 def create_app(config_class=Config):
@@ -38,10 +39,19 @@ def create_app(config_class=Config):
     celery.conf.update(app.config)
     # celery.conf.beat_schedule = {
     #     'add-every-300-seconds': {
-    #         'task': 'app.tasks.check_api_connections',
+    #         'task': 'app.tasks_beat_schedule.beat_schedule_check_api_connections',
     #         'schedule': 300.0
+    #     },'add-every-300-seconds': {
+    #         'task': 'app.tasks_beat_schedule.beat_schedule_check_api_connections',
+    #         'schedule': 30.0
     #     },
     # }
+    celery.conf.beat_schedule = {
+        'add-every-30-seconds': {
+            'task': 'app.tasks_beat_schedule.beat_schedule_check_sims_connections',
+            'schedule': 30.0, 'options': {'queue' : 'A'}
+        },
+    }
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)
 
@@ -65,5 +75,6 @@ def create_app(config_class=Config):
         app.logger.setLevel(logging.INFO)
         app.logger.info('BlueMoonTerminal startup')
     return app
+
 
 from app import models

@@ -3,11 +3,13 @@ from datetime import datetime
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_required
 
+import app.tasks_beat_schedule
 from app import db
-from app.models import User, JasperAccount, JasperCredential, Task
+from app.models import User, JasperAccount, JasperCredential, Task, SubscriberIdentityModule
 from app.main import bp
 from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids
-from app.main.forms import EditProfileForm, AddJasperAPIForm
+from app.tasks_beat_schedule import beat_schedule_check_sims_connections
+from app.main.forms import EditProfileForm, AddJasperAPIForm, AddSIMs
 
 
 @bp.before_app_request
@@ -63,8 +65,17 @@ def jasper_api():
                                           "resource_url": form.resource_url.data}, queue='D')
     return render_template('jasper_api.html', title='Jasper APIs', form=form, available_apis=jasper_credentials)
 
-@bp.route('/<token>/sim', methods=['GET', 'POST'])
+
+@bp.route('/sim/<token>', methods=['GET', 'POST'])
 @login_required
-def subscriber_identity_module (token):
-    form = AddJasperAPIForm(current_user.username)
-    jasper_credentials = current_user.jasper_credential
+def subscriber_identity_module(token):
+    form = AddSIMs()
+    jasper_account = JasperAccount.verify_id_token(token)
+    if form.validate_on_submit():
+        for iccid in form.ListOfICCID.data.splitlines():
+            if SubscriberIdentityModule.query.filter_by(iccid=iccid).first() is None:
+                jasper_account.subscriber_identity_modules.append(SubscriberIdentityModule(iccid=iccid))
+        db.session.add(jasper_account)
+        db.session.commit()
+    return render_template('subscriber_identity_module.html', title='Subscriber Identity Module', form=form,
+                           jasper_account=jasper_account)
