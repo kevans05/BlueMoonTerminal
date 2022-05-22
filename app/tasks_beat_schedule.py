@@ -1,6 +1,6 @@
 from celery import current_task
 from flask import flash
-from app import celery, db
+from app import celery, db, logger
 from app.models import Task, JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
     RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
     RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule, DataUsageToDate

@@ -37,20 +37,7 @@ def create_app(config_class=Config):
     mail.init_app(app)
     bootstrap.init_app(app)
     celery.conf.update(app.config)
-    # celery.conf.beat_schedule = {
-    #     'add-every-1-hour': {
-    #         'task': 'app.tasks_beat_schedule.beat_schedule_check_sims_connections',
-    #         'schedule': 3600.0, 'options': {'queue': 'A'}
-    #     },
-    #     'add-every-1-minutes': {
-    #         'task': 'app.tasks_beat_schedule.beat_schedule_check_api_connections',
-    #         'schedule': 60.0, 'options': {'queue': 'E'}
-    #     },
-    #     'add-every-5-minutes': {
-    #         'task': 'app.tasks_beat_schedule.beat_schedule_check_usage_a',
-    #         'schedule': 300.0, 'options': {'queue': 'B'}
-    #     },
-    # }
+
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)
 

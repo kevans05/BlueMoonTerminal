@@ -166,6 +166,7 @@ def add_rate_plans(username, api_key, resource_url):
                 db.session.commit()
             # finish_task()
 
+
 #bad code
 @celery.task()
 def get_iccids(username, api_key, resource_url):
