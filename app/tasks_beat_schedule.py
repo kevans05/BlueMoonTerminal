@@ -1,8 +1,8 @@
 from app import celery, db
 from app.models import JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
     RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
-    RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule, DataUsageToDate, TaskJasperAccounts
-from app.tasks import finish_task
+    RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule, DataUsageToDate
+# from app.tasks import finish_task
 from app.jasper import rest
 from datetime import datetime
 from celery import current_task
@@ -11,8 +11,8 @@ from celery import current_task
 def beat_scheduled_task_add_to_database(task_name):
     i = celery.control.inspect()
     active_tasks = i.active()
-    task = TaskJasperAccounts(id=active_tasks.id, name=task_name, description="testing the users credentials",
-                user=current_user)
+    # task = TaskJasperAccounts(id=active_tasks.id, name=task_name, description="testing the users credentials",
+    #             user=current_user)
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -24,8 +24,6 @@ def setup_periodic_tasks(sender, **kwargs):
 
     sender.add_periodic_task(600.0, beat_schedule_check_usage_a.s(),
                              name='add-every-10-minutes')
-
-
 
 
 @celery.task()

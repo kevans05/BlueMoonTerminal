@@ -95,8 +95,6 @@ class JasperAccount(db.Model):
 
     rate_plans = db.relationship("RatePlan", back_populates="jasper_account")
 
-    tasks = db.relationship('Task', backref='jasper_account', lazy='dynamic')
-
     jasper_credentials = db.relationship("JasperCredential",
                                          secondary=association_between_jasper_credential_jasper_account,
                                          back_populates="jasper_accounts")
@@ -130,8 +128,6 @@ class JasperCredential(db.Model):
 
     users_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     users = db.relationship("User", back_populates="jasper_credential")
-
-    tasks = db.relationship('TaskJasperAccounts', backref='user', lazy='dynamic')
 
 
 class RatePlan(db.Model):
@@ -363,12 +359,9 @@ class DataUsageToDate(db.Model):
     sim = db.relationship("SubscriberIdentityModule", back_populates="data_usage_to_date")
 
 
-class TaskJasperAccounts(db.Model):
-    __tablename__ = "task_jasper_account"
+class Task(db.Model):
+    __tablename__ = "task"
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True)
     description = db.Column(db.String(128))
     complete = db.Column(db.Boolean, default=False)
-
-    jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
-    jasper_accounts = db.relationship("JasperAccount", back_populates="task_jasper_account")

@@ -8,11 +8,11 @@ from app.jasper import rest
 from datetime import datetime
 
 
-def finish_task():
-    job = current_task
-    task = Task.query.filter_by(id=job.request.id).first()
-    task.complete = True
-    db.session.commit()
+# def finish_task():
+#     job = current_task
+#     task = Task.query.filter_by(id=job.request.id).first()
+#     task.complete = True
+#     db.session.commit()
 
 
 @celery.task()
