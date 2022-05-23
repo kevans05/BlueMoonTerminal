@@ -1,7 +1,7 @@
 from celery import current_task
 from flask import flash
 from app import celery, db
-from app.models import Task, JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
+from app.models import JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
     RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
     RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule
 from app.jasper import rest
@@ -13,13 +13,6 @@ def finish_task():
     task = Task.query.filter_by(id=job.request.id).first()
     task.complete = True
     db.session.commit()
-
-
-def jasper_true_or_false(to_change):
-    if to_change == 'true':
-        return True
-    else:
-        return False
 
 
 @celery.task()
@@ -76,7 +69,7 @@ def add_rate_plans(username, api_key, resource_url):
 
                 for zone in plans['zones']['reportOverageAsRoaming']:
                     rate_plan_zone = RatePlanZone(zone_name=zone,
-                                                  report_overage_as_roaming=jasper_true_or_false(
+                                                  report_overage_as_roaming=rest.jasper_true_or_false(
                                                       plans['zones']['reportOverageAsRoaming'][
                                                           zone]))
 
@@ -91,7 +84,7 @@ def add_rate_plans(username, api_key, resource_url):
                                                              bulk_overage_enabled=plans['dataUsage']['zones'][zone][
                                                                  'bulkOverageEnabled'],
                                                              use_these_data_rounding_settings_for_all_zones=
-                                                             jasper_true_or_false(
+                                                             rest.jasper_true_or_false(
                                                                  plans['dataUsage']['zones'][zone][
                                                                      'useTheseDataRoundingSettingsForAllZones']),
                                                              data_rounding_unit=plans['dataUsage']['zones'][zone][
@@ -144,7 +137,7 @@ def add_rate_plans(username, api_key, resource_url):
                         pool_voice_mt_usage=plans['voiceUsage']['poolVoiceMOUsage'],
                         included_voice=plans['voiceUsage']['zones'][zone]['includedVoice'],
                         included_voice_unit=plans['voiceUsage']['zones'][zone]['includedVoiceUnit'],
-                        use_these_data_rounding_settings_for_all_zones=jasper_true_or_false(
+                        use_these_data_rounding_settings_for_all_zones=rest.jasper_true_or_false(
                             plans['voiceUsage']['zones'][zone]['useTheseDataRoundingSettingsForAllZones']),
                         voice_rounding_unit=plans['voiceUsage']['zones'][zone]['voiceRoundingUnit'])
 
@@ -192,10 +185,10 @@ def update_iccids(username, api_key, resource_url):
             SubscriberIdentityModule.query.filter_by(iccid=sim.iccid). \
                 update({'imei': response[1]['imei'], 'imsi': response[1]['imsi'], 'msisdn': response[1]['msisdn'],
                         'status': response[1]['status'],
-                        'date_activated': datetime.strptime(response[1]['dateActivated'], '%Y-%m-%d %H:%M:%S.%f%z'),
-                        'date_added': datetime.strptime(response[1]['dateAdded'], '%Y-%m-%d %H:%M:%S.%f%z'),
-                        'date_updated': datetime.strptime(response[1]['dateUpdated'], '%Y-%m-%d %H:%M:%S.%f%z'),
-                        'date_shipped': datetime.strptime(response[1]['dateShipped'], '%Y-%m-%d %H:%M:%S.%f%z'),
+                        'date_activated': rest.convert_datetime(response[1]['dateActivated']),
+                        'date_added': rest.convert_datetime(response[1]['dateAdded']),
+                        'date_updated': rest.convert_datetime(response[1]['dateUpdated']),
+                        'date_shipped': rest.convert_datetime(response[1]['dateShipped']),
                         'communication_plan': response[1]['communicationPlan'],
                         'account_id': response[1]['accountId'], 'fixed_ip_address': response[1]['fixedIPAddress'],
                         'operator_custom1': response[1]['operatorCustom1'],

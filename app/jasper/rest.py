@@ -7,13 +7,11 @@ from json import loads
 from urllib.parse import quote
 
 
-def echo(username, api_key, resource_url):
-    url = resource_url + '/rws/api/v1/echo/hello-world'
-    response = get(url, auth=(username, api_key))
-    if response.ok:
-        return "data", loads(response.content)
+def jasper_true_or_false(to_change):
+    if to_change == 'true':
+        return True
     else:
-        return "error", response.status_code
+        return False
 
 
 def get_rate_plan(username, apikey, url_hearer):
@@ -22,6 +20,15 @@ def get_rate_plan(username, apikey, url_hearer):
 
     if response.ok:
         return "data", loads(response.content)['ratePlans']
+    else:
+        return "error", response.status_code
+
+
+def echo(username, api_key, resource_url):
+    url = resource_url + '/rws/api/v1/echo/hello-world'
+    response = get(url, auth=(username, api_key))
+    if response.ok:
+        return "data", loads(response.content)
     else:
         return "error", response.status_code
 

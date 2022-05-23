@@ -1,30 +1,31 @@
-from celery import current_task
-from flask import flash
-from app import celery, db, logger
-from app.models import Task, JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
+from app import celery, db
+from app.models import JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
     RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
-    RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule, DataUsageToDate
+    RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule, DataUsageToDate, TaskJasperAccounts
+from app.tasks import finish_task
 from app.jasper import rest
 from datetime import datetime
+from celery import current_task
 
 
-def convert_datetime(datetime_value):
-    if not datetime_value:
-        return None
-    else:
-        return datetime.strptime(datetime_value, '%Y-%m-%d %H:%M:%S.%f%z')
-
+def beat_scheduled_task_add_to_database(task_name):
+    i = celery.control.inspect()
+    active_tasks = i.active()
+    task = TaskJasperAccounts(id=active_tasks.id, name=task_name, description="testing the users credentials",
+                user=current_user)
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(3600.0, beat_schedule_check_sims_connections.s(),
-                             name='add-every-1-hour', options={'queue': 'A'})
+                             name='add-every-1-hour')
 
     sender.add_periodic_task(60.0, beat_schedule_check_api_connections.s(),
-                             name='add-every-minute', options={'queue': 'E'})
+                             name='add-every-minute')
 
     sender.add_periodic_task(600.0, beat_schedule_check_usage_a.s(),
-                             name='add-every-10-minutes', options={'queue': 'B'})
+                             name='add-every-10-minutes')
+
+
 
 
 @celery.task()
@@ -49,6 +50,7 @@ def beat_schedule_check_api_connections():
 @celery.task()
 def beat_schedule_check_sims_connections():
     jasper_account = JasperAccount.query.all()
+    beat_scheduled_task_add_to_database('beat_schedule_check_sims_connections')
     for accounts in jasper_account:
         for sim in accounts.subscriber_identity_modules:
             response = rest.get_iccid_info(accounts.jasper_credentials[0].username,
@@ -58,10 +60,10 @@ def beat_schedule_check_sims_connections():
                 SubscriberIdentityModule.query.filter_by(iccid=sim.iccid). \
                     update({'imei': response[1]['imei'], 'imsi': response[1]['imsi'], 'msisdn': response[1]['msisdn'],
                             'status': response[1]['status'],
-                            'date_activated': convert_datetime(response[1]['dateActivated']),
-                            'date_added': convert_datetime(response[1]['dateAdded']),
-                            'date_updated': convert_datetime(response[1]['dateUpdated']),
-                            'date_shipped': convert_datetime(response[1]['dateShipped']),
+                            'date_activated': rest.convert_datetime(response[1]['dateActivated']),
+                            'date_added': rest.convert_datetime(response[1]['dateAdded']),
+                            'date_updated': rest.convert_datetime(response[1]['dateUpdated']),
+                            'date_shipped': rest.convert_datetime(response[1]['dateShipped']),
                             'communication_plan': response[1]['communicationPlan'],
                             'account_id': response[1]['accountId'], 'fixed_ip_address': response[1]['fixedIPAddress'],
                             'operator_custom1': response[1]['operatorCustom1'],
