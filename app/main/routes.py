@@ -3,13 +3,11 @@ from datetime import datetime
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_required
 
-import app.tasks_beat_schedule
+
 from app import db
-from app.models import User, JasperAccount, JasperCredential, SubscriberIdentityModule, TaskJasperAccount, \
-    TaskJasperRatePlan, TaskJasperSubscriberIdentityModule
+from app.models import User, JasperAccount, JasperCredential, SubscriberIdentityModule
 from app.main import bp
 from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids
-from app.tasks_beat_schedule import beat_schedule_check_sims_connections
 from app.main.forms import EditProfileForm, AddJasperAPIForm, AddSIMs
 
 
@@ -54,34 +52,21 @@ def edit_profile():
 def jasper_api():
     form = AddJasperAPIForm(current_user.username)
     if form.validate_on_submit():
-        task_add_api_connections = add_api_connections.apply_async(
+        add_api_connections.apply_async(
             kwargs={"username": form.username.data, "api_key": form.api_key.data,
                     "resource_url": form.resource_url.data, "current_user_id": current_user.id})
-        task_jasper_account = TaskJasperAccount(id=task_add_api_connections.id, name="add_api_connections",
-                                                description="add_api_connections")
-        db.session.add(task_jasper_account)
 
-        task_add_rate_plans = add_rate_plans.apply_async(
+
+        add_rate_plans.apply_async(
             kwargs={"username": form.username.data, "api_key": form.api_key.data,
                     "resource_url": form.resource_url.data})
-        task_rate_plans = TaskJasperRatePlan(id=task_add_rate_plans.id, name="add_rate_plans",
-                                                description="add_rate_plans")
-        db.session.add(task_rate_plans)
 
-        task_get_iccids = get_iccids.apply_async(kwargs={"username": form.username.data, "api_key": form.api_key.data,
+        get_iccids.apply_async(kwargs={"username": form.username.data, "api_key": form.api_key.data,
                                                          "resource_url": form.resource_url.data})
-        task_rate_plans_a = TaskJasperRatePlan(id=task_get_iccids.id, name="get_iccids",
-                                             description="get_iccids")
-        db.session.add(task_rate_plans_a)
 
-
-        task_update_iccids = update_iccids.apply_async(
+        update_iccids.apply_async(
             kwargs={"username": form.username.data, "api_key": form.api_key.data,
                     "resource_url": form.resource_url.data})
-        task_jasper_subscriber_identity_module = TaskJasperSubscriberIdentityModule(id=task_update_iccids.id,
-                                                                                    name="update_iccids",
-                                                                                    description="update_iccids")
-        db.session.add(task_jasper_subscriber_identity_module)
         db.session.commit()
     if current_user.number_of_jasper_credential() >= 1:
         jasper_credentials = current_user.jasper_credential

@@ -99,7 +99,6 @@ class JasperAccount(db.Model):
                                          secondary=association_between_jasper_credential_jasper_account,
                                          back_populates="jasper_accounts")
 
-    task_jasper_accounts = db.relationship('TaskJasperAccount', backref='jasper_account', lazy='dynamic')
 
     def get_id_token(self, expires_in=1800):
         return jwt.encode(
@@ -158,8 +157,6 @@ class RatePlan(db.Model):
 
     rate_plan_tiers = db.relationship("RatePlanTierCost", back_populates="rate_plan")
     rate_plan_zones = db.relationship("RatePlanZone", back_populates="rate_plan")
-
-    task_jasper_rate_plans = db.relationship('TaskJasperRatePlan', backref='rate_plan', lazy='dynamic')
 
 
 class RatePlanTierCost(db.Model):
@@ -340,9 +337,6 @@ class SubscriberIdentityModule(db.Model):
     jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
     jasper_accounts = db.relationship("JasperAccount", back_populates="subscriber_identity_modules")
 
-    task_jasper_subscriber_identity_modules = db.relationship('TaskJasperSubscriberIdentityModule',
-                                                              backref='subscriber_identity_module', lazy='dynamic')
-
 
 class Device(db.Model):
     __tablename__ = "device"
@@ -365,32 +359,5 @@ class DataUsageToDate(db.Model):
     sim_id = db.Column(db.Integer, db.ForeignKey('subscriber_identity_module.id'))
     sim = db.relationship("SubscriberIdentityModule", back_populates="data_usage_to_date")
 
-
-class TaskJasperAccount(db.Model):
-    __tablename__ = "task_jasper_account"
-    id = db.Column(db.String(36), primary_key=True)
-    name = db.Column(db.String(128), index=True)
-    description = db.Column(db.String(128))
-    complete = db.Column(db.Boolean, default=False)
-
-    jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
-
-
-class TaskJasperRatePlan(db.Model):
-    __tablename__ = "task_jasper_rate_plan"
-    id = db.Column(db.String(36), primary_key=True)
-    name = db.Column(db.String(128), index=True)
-    description = db.Column(db.String(128))
-    complete = db.Column(db.Boolean, default=False)
-
-    jasper_rate_plan_id = db.Column(db.Integer, db.ForeignKey('rate_plan.id'))
-
-
-class TaskJasperSubscriberIdentityModule(db.Model):
-    __tablename__ = "task_jasper_subscriber_identity_module"
-    id = db.Column(db.String(36), primary_key=True)
-    name = db.Column(db.String(128), index=True)
-    description = db.Column(db.String(128))
-    complete = db.Column(db.Boolean, default=False)
-
-    jasper_subscriber_identity_module_id = db.Column(db.Integer, db.ForeignKey('subscriber_identity_module.id'))
+class Task(db.Model):
+    __tablename__ = "data_usage_to_date"
