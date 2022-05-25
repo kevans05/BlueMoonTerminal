@@ -340,6 +340,9 @@ class SubscriberIdentityModule(db.Model):
     jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
     jasper_accounts = db.relationship("JasperAccount", back_populates="subscriber_identity_modules")
 
+    task_jasper_subscriber_identity_modules = db.relationship('TaskJasperSubscriberIdentityModule',
+                                                              backref='subscriber_identity_module', lazy='dynamic')
+
 
 class Device(db.Model):
     __tablename__ = "device"
@@ -381,3 +384,13 @@ class TaskJasperRatePlan(db.Model):
     complete = db.Column(db.Boolean, default=False)
 
     jasper_rate_plan_id = db.Column(db.Integer, db.ForeignKey('rate_plan.id'))
+
+
+class TaskJasperSubscriberIdentityModule(db.Model):
+    __tablename__ = "task_jasper_subscriber_identity_module"
+    id = db.Column(db.String(36), primary_key=True)
+    name = db.Column(db.String(128), index=True)
+    description = db.Column(db.String(128))
+    complete = db.Column(db.Boolean, default=False)
+
+    jasper_subscriber_identity_module_id = db.Column(db.Integer, db.ForeignKey('subscriber_identity_module.id'))

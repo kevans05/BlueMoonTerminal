@@ -9,8 +9,8 @@ from celery import current_task
 
 
 def beat_scheduled_task_add_to_database(task_name):
-    i = celery.control.inspect()
-    active_tasks = i.active()
+    job = current_task
+    print(job.request.id)
     # task = TaskJasperAccounts(id=active_tasks.id, name=task_name, description="testing the users credentials",
     #             user=current_user)
 
@@ -29,6 +29,7 @@ def setup_periodic_tasks(sender, **kwargs):
 @celery.task()
 def beat_schedule_check_api_connections():
     jasper_credentials = JasperCredential.query.all()
+    beat_scheduled_task_add_to_database('beat_schedule_check_api_connections')
     for credential in jasper_credentials:
         for account in credential.jasper_accounts:
             response = rest.echo(credential.username, credential.api_key, account.resource_url)

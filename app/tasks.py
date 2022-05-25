@@ -171,7 +171,7 @@ def get_iccids(username, api_key, resource_url):
                 subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
                 if subscriber_identity_module is None:
                     jasper_account.subscriber_identity_modules.append(SubscriberIdentityModule(iccid=iccid['iccid']))
-    db.session.add(jasper_account)
+    # db.session.add(jasper_account)
     db.session.commit()
 
 

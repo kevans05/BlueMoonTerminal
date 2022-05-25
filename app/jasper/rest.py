@@ -7,6 +7,13 @@ from json import loads
 from urllib.parse import quote
 
 
+def convert_datetime(datetime_value):
+    if not datetime_value:
+        return None
+    else:
+        return datetime.datetime.strptime(datetime_value, '%Y-%m-%d %H:%M:%S.%f%z')
+
+
 def jasper_true_or_false(to_change):
     if to_change == 'true':
         return True
