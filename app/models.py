@@ -355,6 +355,7 @@ class DataUsageToDate(db.Model):
     ctdSMSUsage = db.Column(db.BIGINT)
     ctdVoiceUsage = db.Column(db.BIGINT)
     date_updated = db.Column(db.DateTime())
+    zones = db.Column(db.String(256))
 
     sim_id = db.Column(db.Integer, db.ForeignKey('subscriber_identity_module.id'))
     sim = db.relationship("SubscriberIdentityModule", back_populates="data_usage_to_date")
