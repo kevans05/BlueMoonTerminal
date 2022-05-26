@@ -24,6 +24,9 @@ def setup_periodic_tasks(sender, **kwargs):
 
     sender.add_periodic_task(600.0, beat_schedule_check_usage_a.s(),
                              name='add-every-10-minutes')
+    #
+    # sender.add_periodic_task(300.0, beat_schedule_suggest_rate_plans.s(),
+    #                          name='add-every-5-minutes')
 
 
 @celery.task()
@@ -106,4 +109,13 @@ def beat_schedule_check_usage_a():
                     DataUsageToDate(ctdDataUsage=response[1]['ctdDataUsage'], ctdSMSUsage=response[1]['ctdSMSUsage'],
                                     ctdVoiceUsage=response[1]['ctdVoiceUsage'], date_updated=datetime_stamp))
                 db.session.commit()
+
+
+# @celery.task()
+# def beat_schedule_suggest_rate_plans():
+#     jasper_account = JasperAccount.query.all()
+#     for accounts in jasper_account:
+#         sims = accounts.subscriber_identity_modules
+#         for data in sims.data_usage_to_date:
+#             print(data.ctdDataUsage)
 

@@ -75,7 +75,7 @@ def jasper_api():
     return render_template('jasper_api.html', title='Jasper APIs', form=form, available_apis=jasper_credentials)
 
 
-@bp.route('/sim/<token>', methods=['GET', 'POST'])
+@bp.route('/<token>/sim', methods=['GET', 'POST'])
 @login_required
 def subscriber_identity_module(token):
     form = AddSIMs()
