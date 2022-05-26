@@ -38,6 +38,23 @@ def create_app(config_class=Config):
     bootstrap.init_app(app)
     celery.conf.update(app.config)
 
+    celery.conf.beat_schedule = {
+        'beat_schedule_check_api_connections-every-1-minutes': {
+            'task': 'app.tasks_beat_schedule.beat_schedule_check_api_connections',
+            'schedule': 60.0
+        },'beat_schedule_check_usage_b-every-1-minutes': {
+            'task': 'app.tasks_beat_schedule.beat_schedule_check_usage_b',
+            'schedule': 60.0
+        },'beat_schedule_organize_sims_and_rates-every-1-minutes':{
+            'task': 'app.tasks_beat_schedule.beat_schedule_organize_sims_and_rates_ctds_only',
+            'schedule': 60.0
+        },
+        'beat_schedule_check_sims_connections-every-1-hour': {
+            'task': 'app.tasks_beat_schedule.beat_schedule_check_sims_connections',
+            'schedule': 3600.0
+        },
+    }
+
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)
 
@@ -64,5 +81,3 @@ def create_app(config_class=Config):
 
 
 from app import models
-
-

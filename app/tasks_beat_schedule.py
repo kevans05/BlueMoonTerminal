@@ -1,46 +1,28 @@
 from app import celery, db
-from app.models import JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
-    RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
-    RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule, DataUsageToDate
-# from app.tasks import finish_task
+from app.models import JasperAccount, JasperCredential, SubscriberIdentityModule, DataUsageToDate, RatePlan, RatePlanZone
 from app.jasper import rest
 from datetime import datetime
-from celery import current_task
 
 
-def beat_scheduled_task_add_to_database(task_name):
-    job = current_task
-    print(job.request.id)
-    # task = TaskJasperAccounts(id=active_tasks.id, name=task_name, description="testing the users credentials",
-    #             user=current_user)
-
-@celery.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(3600.0, beat_schedule_check_sims_connections.s(),
-                             name='add-every-1-hour')
-
-    sender.add_periodic_task(60.0, beat_schedule_check_api_connections.s(),
-                             name='add-every-minute')
-
-    sender.add_periodic_task(600.0, beat_schedule_check_usage_a.s(),
-                             name='add-every-10-minutes')
-    #
-    # sender.add_periodic_task(300.0, beat_schedule_suggest_rate_plans.s(),
-    #                          name='add-every-5-minutes')
+# @celery.on_after_configure.connect
+# def setup_periodic_tasks(sender, **kwargs):
+#     sender.add_periodic_task(3600.0, beat_schedule_check_sims_connections.s(),
+#                              name='add-every-1-hour')
+#     sender.add_periodic_task(60.0, beat_schedule_check_api_connections.s(),
+#                              name='add-every-minute')
+#     sender.add_periodic_task(600.0, beat_schedule_check_usage_a.s(),
+#                              name='add-every-10-minutes')
 
 
-@celery.task()
-def beat_schedule_check_api_connections():
+@celery.task(bind=True)
+def beat_schedule_check_api_connections(self):
     jasper_credentials = JasperCredential.query.all()
-    beat_scheduled_task_add_to_database('beat_schedule_check_api_connections')
     for credential in jasper_credentials:
         for account in credential.jasper_accounts:
             response = rest.echo(credential.username, credential.api_key, account.resource_url)
-
             datetime_stamp = datetime.now()
             credential.last_check = datetime_stamp
             account.last_check = datetime_stamp
-
             if response[0] == "error":
                 db.session.commit()
             elif response[0] == "data":
@@ -49,10 +31,9 @@ def beat_schedule_check_api_connections():
                 db.session.commit()
 
 
-@celery.task()
-def beat_schedule_check_sims_connections():
+@celery.task(bind=True)
+def beat_schedule_check_sims_connections(self):
     jasper_account = JasperAccount.query.all()
-    beat_scheduled_task_add_to_database('beat_schedule_check_sims_connections')
     for accounts in jasper_account:
         for sim in accounts.subscriber_identity_modules:
             response = rest.get_iccid_info(accounts.jasper_credentials[0].username,
@@ -93,8 +74,8 @@ def beat_schedule_check_sims_connections():
                 db.session.commit()
 
 
-@celery.task()
-def beat_schedule_check_usage_a():
+@celery.task(bind=True)
+def beat_schedule_check_usage_a(self):
     jasper_account = JasperAccount.query.all()
     datetime_stamp = datetime.now()
     for accounts in jasper_account:
@@ -104,18 +85,66 @@ def beat_schedule_check_usage_a():
                                               accounts.resource_url, sims.iccid)
             if response[0] == "data":
                 subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=sims.iccid).first()
-
                 subscriber_identity_module.data_usage_to_date.append(
                     DataUsageToDate(ctdDataUsage=response[1]['ctdDataUsage'], ctdSMSUsage=response[1]['ctdSMSUsage'],
                                     ctdVoiceUsage=response[1]['ctdVoiceUsage'], date_updated=datetime_stamp))
                 db.session.commit()
 
 
-# @celery.task()
-# def beat_schedule_suggest_rate_plans():
-#     jasper_account = JasperAccount.query.all()
-#     for accounts in jasper_account:
-#         sims = accounts.subscriber_identity_modules
-#         for data in sims.data_usage_to_date:
-#             print(data.ctdDataUsage)
+@celery.task(bind=True)
+def beat_schedule_check_usage_b(self):
+    jasper_account = JasperAccount.query.all()
+    for accounts in jasper_account:
+        for rate in RatePlan.query.all():
+            list_of_iccid = rest.get_usage_by_rate_plan(accounts.jasper_credentials[0].username,
+                                                        accounts.jasper_credentials[0].api_key, accounts.resource_url,
+                                                        rate.name)
+            if list_of_iccid[0] == "data":
+                for iccid in list_of_iccid[1]:
+                    subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
+                    if subscriber_identity_module is None:
+                        subscriber_identity_module = SubscriberIdentityModule(iccid=iccid['iccid'])
+                        jasper_account.subscriber_identity_modules.append(subscriber_identity_module)
+                    subscriber_identity_module.data_usage_to_date.append(
+                        DataUsageToDate(ctdDataUsage=iccid['dataUsage'],zones=iccid['zone'],
+                                        ctdSMSUsage=iccid['smsMOUsage'] + iccid['smsMTUsage'],
+                                        ctdVoiceUsage=iccid['voiceMOUsage'] + iccid['voiceMTUsage'],
+                                        date_updated=iccid['date_updated']))
+                    db.session.commit()
+
+
+@celery.task(bind=True)
+def beat_schedule_organize_sims_and_rates_ctds_only(self):
+    jasper_account = JasperAccount.query.all()
+    for accounts in jasper_account:
+
+        sim_list = []
+        for sims in accounts.subscriber_identity_modules:
+            data_to_date = DataUsageToDate.query.filter_by(sim_id=sims.id).order_by(
+                DataUsageToDate.date_updated.desc()).first()
+            sim_list.append((sims.iccid,data_to_date.ctdDataUsage, data_to_date.zones))
+        rate_plans = db.session.query(RatePlan).outerjoin(RatePlanZone, RatePlan.id ==
+                                                          RatePlanZone.rate_plan_id).add_entity(RatePlanZone)
+        for plan in rate_plans:
+            print(plan)
+            print(plan[1])
+            print(plan[1].zone_name)
+            # included_data = plan[1].rate_plan_data_usage
+            # number_of_data_accounts = 0
+            # total_included_data = 0
+            # for device in sim_list:
+            #     if (device[1] >= plan[1].rate_plan_data_usage or (
+            #              number_of_data_accounts * included_data - total_included_data) <= 0):
+            #         number_of_data_accounts = number_of_data_accounts + 1
+            #         print(device)
+            #         total_included_data = total_included_data + device[1]
+            #         sim_list.remove(device)
+            #     else:
+            #         break
+
+        # print(sorted(sim_list, key=lambda student: student[1], reverse=True))
+        # for x in RatePlan.query.filter_by(jasper_account_id=accounts.id).all():
+        #     print(dir(x))
+        #     for y in x.rate_plan_zones:
+        #         print(y.zone_name)
 

@@ -1,4 +1,3 @@
-from celery import current_task
 from flask import flash
 from app import celery, db
 from app.models import JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
@@ -6,13 +5,6 @@ from app.models import JasperAccount, JasperCredential, User, RatePlan, RatePlan
     RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule
 from app.jasper import rest
 from datetime import datetime
-
-
-# def finish_task():
-#     job = current_task
-#     task = Task.query.filter_by(id=job.request.id).first()
-#     task.complete = True
-#     db.session.commit()
 
 
 @celery.task()
@@ -44,7 +36,6 @@ def add_api_connections(username, api_key, resource_url, current_user_id):
 def add_rate_plans(username, api_key, resource_url):
     response = rest.get_rate_plan(username, api_key, resource_url)
     if response[0] == "error":
-        # finish_task()
         flash("rate plan download Error")
     elif response[0] == "data":
         for plans in response[1]:
@@ -157,10 +148,8 @@ def add_rate_plans(username, api_key, resource_url):
                 jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()
                 jasper_account.rate_plans.append(rate_plan)
                 db.session.commit()
-            # finish_task()
 
 
-#bad code
 @celery.task()
 def get_iccids(username, api_key, resource_url):
     jasper_account = JasperAccount.query.filter_by(resource_url=resource_url).first()
@@ -171,7 +160,6 @@ def get_iccids(username, api_key, resource_url):
                 subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
                 if subscriber_identity_module is None:
                     jasper_account.subscriber_identity_modules.append(SubscriberIdentityModule(iccid=iccid['iccid']))
-    # db.session.add(jasper_account)
     db.session.commit()
 
 
@@ -181,7 +169,6 @@ def update_iccids(username, api_key, resource_url):
     for sim in jasper_account.subscriber_identity_modules:
         response = rest.get_iccid_info(username, api_key, resource_url, sim.iccid)
         if response[0] == "data":
-            # jasper_account.update({'imei':response[1]['imei']})
             SubscriberIdentityModule.query.filter_by(iccid=sim.iccid). \
                 update({'imei': response[1]['imei'], 'imsi': response[1]['imsi'], 'msisdn': response[1]['msisdn'],
                         'status': response[1]['status'],

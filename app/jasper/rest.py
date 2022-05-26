@@ -52,7 +52,6 @@ def get_usage_by_rate_plan(username, apikey, url_hearer, rate_plan):
         response = get(url, auth=(username, apikey))
         if response.ok:
             data = loads(response.content)
-            print(data)
             for zones in data['zones']:
                 for devices in zones['devices']:
                     iemi_list.append({"iccid": devices['deviceId'], "dataUsage": devices['usage']['dataUsage'],
@@ -60,6 +59,7 @@ def get_usage_by_rate_plan(username, apikey, url_hearer, rate_plan):
                                       "smsMTUsage": devices['usage']['smsMTUsage'],
                                       "voiceMOUsage": devices['usage']['voiceMOUsage'],
                                       "voiceMTUsage": devices['usage']['voiceMTUsage'],
+                                      "zone":zones['zone'],
                                       "date_updated": datetime.datetime.now()})
 
             if data['lastPage']:
