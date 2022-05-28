@@ -1,5 +1,7 @@
 from app import celery, db
-from app.models import JasperAccount, JasperCredential, SubscriberIdentityModule, DataUsageToDate, RatePlan, RatePlanZone
+from app.models import JasperAccount, JasperCredential, SubscriberIdentityModule, DataUsageToDate, RatePlan, \
+    RatePlanZone, RatePlanDataUsage, RatePlanTierDataUsage, RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
+    RatePlanTierVoiceUsage
 from app.jasper import rest
 from datetime import datetime
 
@@ -13,6 +15,44 @@ from datetime import datetime
 #     sender.add_periodic_task(600.0, beat_schedule_check_usage_a.s(),
 #                              name='add-every-10-minutes')
 
+def get_sims_for_account_list(account):
+    sim_list = []
+    for sims in account.subscriber_identity_modules:
+        data_to_date = DataUsageToDate.query.filter_by(sim_id=sims.id).order_by(
+            DataUsageToDate.date_updated.desc()).first()
+        sim_list.append((sims.iccid, data_to_date.ctdDataUsage, data_to_date.zones))
+    return sim_list
+
+
+def get_rate_plans_for_account_list(account):
+    return db.session.query(RatePlan).filter_by(jasper_account_id=account.id).outerjoin(RatePlanZone, RatePlan.id ==
+                                                                                        RatePlanZone.rate_plan_id).add_entity(
+        RatePlanZone).outerjoin(
+        RatePlanDataUsage, RatePlanZone.id ==
+                           RatePlanDataUsage.rate_plan_zone_id).add_entity(RatePlanDataUsage).outerjoin(
+        RatePlanTierDataUsage, RatePlanDataUsage.id ==
+                               RatePlanTierDataUsage.rate_plan_data_usages_id).add_entity(
+        RatePlanTierDataUsage).outerjoin(
+        RatePlanSMSUsage, RatePlanZone.id ==
+                          RatePlanSMSUsage.rate_plan_zones_id).add_entity(RatePlanSMSUsage).outerjoin(
+        RatePlanTierSMSUsage, RatePlanSMSUsage.id ==
+                              RatePlanTierSMSUsage.rate_plan_sms_usages_id).add_entity(
+        RatePlanTierSMSUsage).outerjoin(
+        RatePlanVoiceUsage, RatePlanZone.id ==
+                            RatePlanVoiceUsage.rate_plan_zones_id).add_entity(RatePlanVoiceUsage).outerjoin(
+        RatePlanTierVoiceUsage, RatePlanVoiceUsage.id ==
+                                RatePlanTierVoiceUsage.rate_plan_voice_usages_id).add_entity(
+        RatePlanTierVoiceUsage)
+
+
+def sort_sims_by_data(sims, rates):
+    return
+
+def sort_sims_by_voice(sims, rates):
+    return
+
+def sort_sims_by_sms(sims, rates):
+    return
 
 @celery.task(bind=True)
 def beat_schedule_check_api_connections(self):
@@ -106,7 +146,7 @@ def beat_schedule_check_usage_b(self):
                         subscriber_identity_module = SubscriberIdentityModule(iccid=iccid['iccid'])
                         jasper_account.subscriber_identity_modules.append(subscriber_identity_module)
                     subscriber_identity_module.data_usage_to_date.append(
-                        DataUsageToDate(ctdDataUsage=iccid['dataUsage'],zones=iccid['zone'],
+                        DataUsageToDate(ctdDataUsage=iccid['dataUsage'], zones=iccid['zone'],
                                         ctdSMSUsage=iccid['smsMOUsage'] + iccid['smsMTUsage'],
                                         ctdVoiceUsage=iccid['voiceMOUsage'] + iccid['voiceMTUsage'],
                                         date_updated=iccid['date_updated']))
@@ -114,21 +154,14 @@ def beat_schedule_check_usage_b(self):
 
 
 @celery.task(bind=True)
-def beat_schedule_organize_sims_and_rates_ctds_only(self):
+def beat_schedule_organize_sims_and_rates(self):
     jasper_account = JasperAccount.query.all()
-    for accounts in jasper_account:
-
-        sim_list = []
-        for sims in accounts.subscriber_identity_modules:
-            data_to_date = DataUsageToDate.query.filter_by(sim_id=sims.id).order_by(
-                DataUsageToDate.date_updated.desc()).first()
-            sim_list.append((sims.iccid,data_to_date.ctdDataUsage, data_to_date.zones))
-        rate_plans = db.session.query(RatePlan).outerjoin(RatePlanZone, RatePlan.id ==
-                                                          RatePlanZone.rate_plan_id).add_entity(RatePlanZone)
+    for account in jasper_account:
+        sims = get_sims_for_account_list(account)
+        rate_plans = get_rate_plans_for_account_list(account)
         for plan in rate_plans:
             print(plan)
-            print(plan[1])
-            print(plan[1].zone_name)
+
             # included_data = plan[1].rate_plan_data_usage
             # number_of_data_accounts = 0
             # total_included_data = 0
@@ -147,4 +180,3 @@ def beat_schedule_organize_sims_and_rates_ctds_only(self):
         #     print(dir(x))
         #     for y in x.rate_plan_zones:
         #         print(y.zone_name)
-
