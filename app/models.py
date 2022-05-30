@@ -192,7 +192,7 @@ class RatePlanDataUsage(db.Model):
     use_default_rating = db.Column(db.Boolean)
     usage_limit_unit = db.Column(db.String(256))
 
-    included_data = db.Column(db.BIGINT)
+    included_data = db.Column(db.FLOAT)
     included_data_unit = db.Column(db.String(2))
     zone_usage_limit_unit = db.Column(db.String(256))
     bulk_overage_enabled = db.Column(db.Boolean)
@@ -351,9 +351,9 @@ class Device(db.Model):
 class DataUsageToDate(db.Model):
     __tablename__ = "data_usage_to_date"
     id = db.Column(db.Integer, primary_key=True)
-    ctdDataUsage = db.Column(db.BIGINT)
-    ctdSMSUsage = db.Column(db.BIGINT)
-    ctdVoiceUsage = db.Column(db.BIGINT)
+    ctdDataUsage = db.Column(db.FLOAT)
+    ctdSMSUsage = db.Column(db.FLOAT)
+    ctdVoiceUsage = db.Column(db.FLOAT)
     date_updated = db.Column(db.DateTime())
     zones = db.Column(db.String(256))
 

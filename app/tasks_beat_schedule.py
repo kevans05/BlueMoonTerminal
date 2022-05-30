@@ -46,7 +46,22 @@ def get_rate_plans_for_account_list(account):
 
 
 def sort_sims_by_data(sims, rates):
-    return
+    for plan in rates:
+        print(plan[2].included_data)
+
+
+        # included_data = plan[1].rate_plan_data_usage
+        # number_of_data_accounts = 0
+        # total_included_data = 0
+        # for device in sim_list:
+        #     if (device[1] >= plan[1].rate_plan_data_usage or (
+        #              number_of_data_accounts * included_data - total_included_data) <= 0):
+        #         number_of_data_accounts = number_of_data_accounts + 1
+        #         print(device)
+        #         total_included_data = total_included_data + device[1]
+        #         sim_list.remove(device)
+        #     else:
+        #         break
 
 def sort_sims_by_voice(sims, rates):
     return
@@ -159,21 +174,7 @@ def beat_schedule_organize_sims_and_rates(self):
     for account in jasper_account:
         sims = get_sims_for_account_list(account)
         rate_plans = get_rate_plans_for_account_list(account)
-        for plan in rate_plans:
-            print(plan)
-
-            # included_data = plan[1].rate_plan_data_usage
-            # number_of_data_accounts = 0
-            # total_included_data = 0
-            # for device in sim_list:
-            #     if (device[1] >= plan[1].rate_plan_data_usage or (
-            #              number_of_data_accounts * included_data - total_included_data) <= 0):
-            #         number_of_data_accounts = number_of_data_accounts + 1
-            #         print(device)
-            #         total_included_data = total_included_data + device[1]
-            #         sim_list.remove(device)
-            #     else:
-            #         break
+        sort_sims_by_data(sims,rate_plans)
 
         # print(sorted(sim_list, key=lambda student: student[1], reverse=True))
         # for x in RatePlan.query.filter_by(jasper_account_id=accounts.id).all():
