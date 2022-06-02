@@ -15,12 +15,37 @@ from datetime import datetime
 #     sender.add_periodic_task(600.0, beat_schedule_check_usage_a.s(),
 #                              name='add-every-10-minutes')
 
+def metric_to_value(metric):
+    match metric:
+        case 'B':
+            return 1
+        case 'kB':
+            return 1000
+        case 'MB':
+            return 1000 ** 2
+        case 'GB':
+            return 1000 ** 3
+        case 'TB':
+            return 1000 ** 4
+        case 'PB':
+            return 1000 ** 5
+        case 'EB':
+            return 1000 ** 6
+        case 'ZB':
+            return 1000 ** 7
+        case 'YB':
+            return 1000 ** 8
+
+
 def get_sims_for_account_list(account):
     sim_list = []
     for sims in account.subscriber_identity_modules:
         data_to_date = DataUsageToDate.query.filter_by(sim_id=sims.id).order_by(
             DataUsageToDate.date_updated.desc()).first()
-        sim_list.append((sims.iccid, data_to_date.ctdDataUsage, data_to_date.zones))
+        if data_to_date:
+            sim_list.append((sims.iccid, data_to_date.ctdDataUsage, data_to_date.zones))
+        else:
+            sim_list.append((sims.iccid, 0, None))
     return sim_list
 
 
@@ -46,22 +71,28 @@ def get_rate_plans_for_account_list(account):
 
 
 def sort_sims_by_data(sims, rates):
+    sims = sorted(sims, key=lambda data: data[1], reverse=True)
+    for sim in sims:
+        print(sim)
+    rates = sorted(rates, key=lambda data: data[2].included_data, reverse=True)
     for plan in rates:
-        print(plan[2].included_data)
-
-
-        # included_data = plan[1].rate_plan_data_usage
-        # number_of_data_accounts = 0
-        # total_included_data = 0
-        # for device in sim_list:
-        #     if (device[1] >= plan[1].rate_plan_data_usage or (
-        #              number_of_data_accounts * included_data - total_included_data) <= 0):
-        #         number_of_data_accounts = number_of_data_accounts + 1
-        #         print(device)
-        #         total_included_data = total_included_data + device[1]
-        #         sim_list.remove(device)
-        #     else:
-        #         break
+        included_data = metric_to_value(plan[2].included_data_unit)
+        number_of_data_accounts = 0
+        total_included_data = 0
+        print(plan[0].name)
+        for device in sims:
+            # print(device[1])
+            if (device[1] >= metric_to_value(plan[2].included_data_unit) or (
+                     number_of_data_accounts * included_data - total_included_data) <= 0):
+                number_of_data_accounts = number_of_data_accounts + 1
+                total_included_data = total_included_data + device[1]
+                print(device)
+                sims.remove(device)
+            else:
+                break
+        print(number_of_data_accounts)
+        print(total_included_data)
+        print("*"*100)
 
 def sort_sims_by_voice(sims, rates):
     return
