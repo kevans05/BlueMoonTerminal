@@ -22,11 +22,9 @@ class AssociationBetweenSubscriberIdentityModuleRatePlan(db.Model):
     rate_plan_id = db.Column(db.ForeignKey('rate_plan.id'), primary_key=True)
     date_time_of_change = db.Column(db.DateTime())
     rate_plans = db.relationship("RatePlan",
-                                 backref=db.backref("association_between_subscriber_identity_module_rate_plan",
-                                                    cascade="all, delete-orphan"))
+                                 back_populates="sims")
     sim = db.relationship("SubscriberIdentityModule",
-                          backref=db.backref("association_between_subscriber_identity_module_rate_plan",
-                                             cascade="all, delete-orphan"))
+                          back_populates="rate_plans")
 
 
 class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
@@ -34,11 +32,9 @@ class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
     subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
     device_id = db.Column(db.ForeignKey('device.id'), primary_key=True)
     date_time_of_change = db.Column(db.DateTime())
-    device = db.relationship("Device", backref=db.backref("association_between_subscriber_identity_module_device",
-                                                          cascade="all, delete-orphan"))
+    device = db.relationship("Device", back_populates="sims")
     sim = db.relationship("SubscriberIdentityModule",
-                          backref=db.backref("association_between_subscriber_identity_module_device",
-                                             cascade="all, delete-orphan"))
+                          back_populates="devices")
 
 
 class User(UserMixin, db.Model):
@@ -330,7 +326,7 @@ class SubscriberIdentityModule(db.Model):
     global_sim_type = db.Column(db.String(256))
     mec = db.Column(db.String(256))
 
-    devices = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="sim")
+    devices = db.relationship("AssociationBetweenSubscriberIdentityModuleDevice", back_populates="sim")
     data_usage_to_date = db.relationship("DataUsageToDate", back_populates="sim")
     rate_plans = db.relationship("AssociationBetweenSubscriberIdentityModuleRatePlan", back_populates="sim")
 

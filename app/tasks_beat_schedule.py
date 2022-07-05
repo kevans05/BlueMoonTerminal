@@ -225,6 +225,7 @@ def beat_schedule_check_usage_b(self):
                                                         rate_plan.name)
             if list_of_iccid[0] == "data":
                 for iccid in list_of_iccid[1]:
+                    print(iccid['iccid'])
                     subscriber_identity_modules_iccid.remove(iccid['iccid'])
                     subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
                     if subscriber_identity_module is None:
