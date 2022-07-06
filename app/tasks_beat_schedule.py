@@ -1,7 +1,7 @@
 from app import celery, db
 from app.models import JasperAccount, JasperCredential, SubscriberIdentityModule, DataUsageToDate, RatePlan, \
     RatePlanZone, RatePlanDataUsage, RatePlanTierDataUsage, RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
-    RatePlanTierVoiceUsage, RatePlanTierCost
+    RatePlanTierVoiceUsage, RatePlanTierCost, SubscriberIdentityModule
 from app.jasper import rest
 from datetime import datetime
 
@@ -225,18 +225,21 @@ def beat_schedule_check_usage_b(self):
                                                         rate_plan.name)
             if list_of_iccid[0] == "data":
                 for iccid in list_of_iccid[1]:
-                    print(iccid['iccid'])
-                    subscriber_identity_modules_iccid.remove(iccid['iccid'])
-                    subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
-                    if subscriber_identity_module is None:
-                        subscriber_identity_module = SubscriberIdentityModule(iccid=iccid['iccid'])
-                        jasper_account.subscriber_identity_modules.append(subscriber_identity_module)
-                    subscriber_identity_module.data_usage_to_date.append(
-                        DataUsageToDate(ctdDataUsage=iccid['dataUsage'], zones=iccid['zone'],
-                                        ctdSMSUsage=iccid['smsMOUsage'] + iccid['smsMTUsage'],
-                                        ctdVoiceUsage=iccid['voiceMOUsage'] + iccid['voiceMTUsage'],
-                                        date_updated=iccid['date_updated']))
-                    db.session.commit()
+                    if iccid['iccid'] in subscriber_identity_modules_iccid:
+                        subscriber_identity_modules_iccid.remove(iccid['iccid'])
+                        subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
+                        if subscriber_identity_module is None:
+                            subscriber_identity_module = SubscriberIdentityModule(iccid=iccid['iccid'])
+                            jasper_account.subscriber_identity_modules.append(subscriber_identity_module)
+                        subscriber_identity_module.data_usage_to_date.append(
+                            DataUsageToDate(ctdDataUsage=iccid['dataUsage'], zones=iccid['zone'],
+                                            ctdSMSUsage=iccid['smsMOUsage'] + iccid['smsMTUsage'],
+                                            ctdVoiceUsage=iccid['voiceMOUsage'] + iccid['voiceMTUsage'],
+                                            date_updated=iccid['date_updated']))
+                        db.session.commit()
+                    else:
+                        account.subscriber_identity_modules.append(SubscriberIdentityModule(iccid=iccid['iccid']))
+                        db.session.commit()
 
         for iccid in subscriber_identity_modules_iccid:
             subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid).first()
