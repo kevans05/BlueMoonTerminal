@@ -71,68 +71,6 @@ def get_rate_plans_for_account_list(account):
                             RatePlanTierCost.rate_plan_id).add_entity(RatePlanTierCost)
 
 
-def bisection_sort(sims, plan):
-    included_data = metric_to_value(plan[2].included_data_unit) * plan[2].included_data
-    middle_index = int(len(sims)/2)
-    sum_of_account = middle_index * included_data - sum(j for i, j, k in sims[:middle_index])
-    print(plan[0].name)
-    print("sum of account: {diffrence}".format(diffrence=sum_of_account))
-    print("data left: {left}".format(left=included_data*middle_index))
-    print("delta {delta}".format(delta=(sum_of_account - included_data*middle_index)))
-    print("delta {delta}".format(delta=(sum_of_account - included_data * middle_index)))
-    print(0 < sum_of_account-middle_index*included_data < included_data)
-    print(0 > sum_of_account-middle_index*included_data < included_data)
-    print(0 < sum_of_account - middle_index * included_data > included_data)
-    if 0 < sum_of_account-middle_index*included_data < included_data:
-        print("pass")
-        return sims[:middle_index]
-    elif 0 > sum_of_account-middle_index*included_data < included_data:
-        print("rais {value}".format(value=int(middle_index*1.5)))
-        return bisection_sort(sims[int(middle_index*1.5):], plan)
-    elif 0 < sum_of_account - middle_index * included_data > included_data:
-        print("Lower {value}".format(value=int(middle_index*.5)))
-        return bisection_sort(sims[:int(middle_index*.5)], plan)
-    # is_plan_greater_then_highest_sim = sims[0] >= included_data
-    #
-    # if () or (middle_index * included_data - sum(j for i, j, k in sims[:middle_index]) <= 0):
-    #     return sims[:middle_index]
-    # # elif sims[0] > included_data and sum(j for i, j, k in sims[:middle_index]) < included_data*middle_index:
-    # #
-
-def sort_sims_by_data(sims, rates):
-    sims = sorted(sims, key=lambda data: data[1], reverse=True)
-    rates = sorted(rates, key=lambda data: data[2].included_data, reverse=True)
-    for plan in rates:
-        #print(plan[0].name, plan[2].included_data, plan[1], plan[8].per_subscriber_charge)
-        bisection_sort(sims, plan)
-
-        #included_data = metric_to_value(plan[2].included_data_unit) * plan[2].included_data
-        #number_of_data_accounts = 0
-        #total_included_data = 0
-        # print(plan[0].name)
-        # for device in sims:
-        #     # print(device[1])
-        #     if (device[1] >= metric_to_value(plan[2].included_data_unit) or (
-        #             number_of_data_accounts * included_data - total_included_data) <= 0):
-        #         number_of_data_accounts = number_of_data_accounts + 1
-        #         total_included_data = total_included_data + device[1]
-        #         print(device)
-        #         sims.remove(device)
-        #     else:
-        #         break
-        # print(number_of_data_accounts)
-        # print(total_included_data)
-        # print("*" * 100)
-
-
-def sort_sims_by_voice(sims, rates):
-    return
-
-
-def sort_sims_by_sms(sims, rates):
-    return
-
-
 @celery.task(bind=True)
 def beat_schedule_check_api_connections(self):
     jasper_credentials = JasperCredential.query.all()
@@ -251,14 +189,18 @@ def beat_schedule_check_usage_b(self):
             db.session.commit()
 
 
+def find_best_rate_per_sims(sims, rates, sims_for_rate=None):
+    print(rates[2].included_data, rates[2].included_data_unit, rates[8].per_subscriber_charge)
+    print(metric_to_value(rates[2].included_data_unit)*rates[2].included_data/rates[8].per_subscriber_charge)
+
 @celery.task(bind=True)
 def beat_schedule_organize_sims_and_rates(self):
     jasper_account = JasperAccount.query.all()
     for account in jasper_account:
-        sims = get_sims_for_account_list(account)
-        rate_plans = get_rate_plans_for_account_list(account)
-        sort_sims_by_data(sims, rate_plans)
-
+        rate_plans = get_rate_plans_for_account_list(account) #sorted(get_rate_plans_for_account_list(account), key=lambda data: data[1], reverse=True)
+        sims = sorted(get_sims_for_account_list(account), key=lambda data: data[1], reverse=True)
+        for rate_plan in rate_plans:
+            find_best_rate_per_sims(sims,rate_plan)
     # print(sorted(sim_list, key=lambda student: student[1], reverse=True))
     # for x in RatePlan.query.filter_by(jasper_account_id=accounts.id).all():
     #     print(dir(x))
