@@ -68,7 +68,8 @@ def get_rate_plans_for_account_list(account):
         RatePlanTierVoiceUsage, RatePlanVoiceUsage.id ==
                                 RatePlanTierVoiceUsage.rate_plan_voice_usages_id).add_entity(
         RatePlanTierVoiceUsage).outerjoin(RatePlanTierCost, RatePlan.id ==
-                            RatePlanTierCost.rate_plan_id).add_entity(RatePlanTierCost)
+                                          RatePlanTierCost.rate_plan_id).add_entity(RatePlanTierCost).order_by(
+        RatePlanDataUsage.included_data.desc())
 
 
 @celery.task(bind=True)
@@ -165,7 +166,8 @@ def beat_schedule_check_usage_b(self):
                 for iccid in list_of_iccid[1]:
                     if iccid['iccid'] in subscriber_identity_modules_iccid:
                         subscriber_identity_modules_iccid.remove(iccid['iccid'])
-                        subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
+                        subscriber_identity_module = SubscriberIdentityModule.query.filter_by(
+                            iccid=iccid['iccid']).first()
                         if subscriber_identity_module is None:
                             subscriber_identity_module = SubscriberIdentityModule(iccid=iccid['iccid'])
                             jasper_account.subscriber_identity_modules.append(subscriber_identity_module)
@@ -190,19 +192,23 @@ def beat_schedule_check_usage_b(self):
 
 
 def find_best_rate_per_sims(sims, rates, sims_for_rate=None):
-    print(rates[2].included_data, rates[2].included_data_unit, rates[8].per_subscriber_charge)
-    print(metric_to_value(rates[2].included_data_unit)*rates[2].included_data/rates[8].per_subscriber_charge)
+    # print(rates[2].included_data, rates[2].included_data_unit, rates[8].per_subscriber_charge)
+    # gets the rate value and coverts it to a Byte value
+    included_data_on_b = metric_to_value(rates[2].included_data_unit) * rates[2].included_data
+    cost_per_plan = rates[8].per_subscriber_charge
+    print(rates[0].name)
+    print("Cost per B of Data optimal {CPB:.20f}".format(CPB=cost_per_plan/included_data_on_b))
+    # /sims[1] > included_data_on_b:
+
+
+
 
 @celery.task(bind=True)
 def beat_schedule_organize_sims_and_rates(self):
     jasper_account = JasperAccount.query.all()
     for account in jasper_account:
-        rate_plans = get_rate_plans_for_account_list(account) #sorted(get_rate_plans_for_account_list(account), key=lambda data: data[1], reverse=True)
+        rate_plans = get_rate_plans_for_account_list(
+            account)
         sims = sorted(get_sims_for_account_list(account), key=lambda data: data[1], reverse=True)
         for rate_plan in rate_plans:
-            find_best_rate_per_sims(sims,rate_plan)
-    # print(sorted(sim_list, key=lambda student: student[1], reverse=True))
-    # for x in RatePlan.query.filter_by(jasper_account_id=accounts.id).all():
-    #     print(dir(x))
-    #     for y in x.rate_plan_zones:
-    #         print(y.zone_name)
+            find_best_rate_per_sims(sims, rate_plan)
