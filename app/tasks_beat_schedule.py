@@ -4,7 +4,7 @@ from app.models import JasperAccount, JasperCredential, SubscriberIdentityModule
     RatePlanTierVoiceUsage, RatePlanTierCost, SubscriberIdentityModule
 from app.jasper import rest
 from datetime import datetime
-
+import sys
 
 # @celery.on_after_configure.connect
 # def setup_periodic_tasks(sender, **kwargs):
@@ -191,16 +191,25 @@ def beat_schedule_check_usage_b(self):
             db.session.commit()
 
 
-def find_best_rate_per_sims(sims, rates, sims_for_rate=None):
-    # print(rates[2].included_data, rates[2].included_data_unit, rates[8].per_subscriber_charge)
-    # gets the rate value and coverts it to a Byte value
-    included_data_on_b = metric_to_value(rates[2].included_data_unit) * rates[2].included_data
-    cost_per_plan = rates[8].per_subscriber_charge
-    print(rates[0].name)
-    print("Cost per B of Data optimal {CPB:.20f}".format(CPB=cost_per_plan/included_data_on_b))
-    # /sims[1] > included_data_on_b:
+def find_best_rate_per_sims(sims, rate, sims_for_rate=[]):
+    included_data_on_b = metric_to_value(rate[2].included_data_unit) * rate[2].included_data
+    # print(rate[0].name)
+    # print("{IDO:.20f}".format(IDO=included_data_on_b))
+    # print("left over SIMS {}".format(len(sims)))
+    # print("SIMS LEFT {}".format( not(len(sims) == 0)))
+    new_sim = sims[0][1] > included_data_on_b
+    plan_has_enough_data = sum(x[1] for x in sims_for_rate) > len(sims_for_rate) * included_data_on_b
+    XXXX = new_sim or plan_has_enough_data
+    enough_sims =  len(sims) > 1
+    YYYY = XXXX and enough_sims
 
-
+    # print("NEW SIM {NS}, PLAN DATA {PD}, OR {OS}".format(NS = new_sim, PD= plan_has_enough_data, OS = XXXX))
+    # print("OR STATE {OS}, ENOUGH SIMS {ES}, AND STATE {AS}".format(OS = XXXX, ES = enough_sims, AS=YYYY))
+    if YYYY:
+        sims_for_rate.append(sims.pop(0))
+        return find_best_rate_per_sims(sims, rate, sims_for_rate)
+    else:
+        return sims, sims_for_rate
 
 
 @celery.task(bind=True)
@@ -210,5 +219,20 @@ def beat_schedule_organize_sims_and_rates(self):
         rate_plans = get_rate_plans_for_account_list(
             account)
         sims = sorted(get_sims_for_account_list(account), key=lambda data: data[1], reverse=True)
-        for rate_plan in rate_plans:
-            find_best_rate_per_sims(sims, rate_plan)
+        sys.setrecursionlimit(len(sims))
+
+        for rate_plan in rate_plans[:-1]:
+            sims, sims_for_rate = find_best_rate_per_sims(sims, rate_plan)
+            included_data_on_b = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
+            # sims = results[0]
+            print("*-" *100)
+            print(rate_plan)
+            print(len(sims_for_rate))
+            print(len(sims))
+            # print(included_data_on_b * len(sims_for_rate))
+            # print(sum(x[1] for x in sims_for_rate))
+            # print(sum(x[1] for x in sims_for_rate) - len(sims_for_rate) * included_data_on_b)
+            print("__" * 100)
+            # print(results[1])
+            print("$-"*100)
+
