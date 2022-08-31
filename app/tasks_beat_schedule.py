@@ -234,10 +234,10 @@ def beat_schedule_organize_sims_and_rates(self):
                     plan_data_b += sim[1]
                     number_of_plan += 1
                     sims.remove(sim)
-                # elif rate_plans.index(rate_plan) == rate_plans:
-                #     plan_data_b += sim[1]
-                #     number_of_plan += 1
-                #     sims.remove(sim)
+                elif rate_plans.count()-1 == count:
+                     plan_data_b += sim[1]
+                     number_of_plan += 1
+                     sims.remove(sim)
                 else:
                     break
             print(rate_plan[0].name)
