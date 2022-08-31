@@ -220,19 +220,31 @@ def beat_schedule_organize_sims_and_rates(self):
             account)
         sims = sorted(get_sims_for_account_list(account), key=lambda data: data[1], reverse=True)
         sys.setrecursionlimit(len(sims))
+        print(type(rate_plans))
+        for count, rate_plan in enumerate(rate_plans):
+            # sims, sims_for_rate = find_best_rate_per_sims(sims, rate_plan)
+            included_data_b = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
+            plan_data_b = 0
+            number_of_plan = 0
+            print(rate_plans.count()-1)
+            print(count)
+            print(rate_plans.count()-1 == count)
+            for sim in sims:
+                if sim[1] > included_data_b or plan_data_b > number_of_plan*included_data_b:
+                    plan_data_b += sim[1]
+                    number_of_plan += 1
+                    sims.remove(sim)
+                # elif rate_plans.index(rate_plan) == rate_plans:
+                #     plan_data_b += sim[1]
+                #     number_of_plan += 1
+                #     sims.remove(sim)
+                else:
+                    break
+            print(rate_plan[0].name)
+            print(included_data_b)
+            print(number_of_plan*included_data_b)
+            print(plan_data_b)
+            print(number_of_plan)
 
-        for rate_plan in rate_plans[:-1]:
-            sims, sims_for_rate = find_best_rate_per_sims(sims, rate_plan)
-            included_data_on_b = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
-            # sims = results[0]
-            print("*-" *100)
-            print(rate_plan)
-            print(len(sims_for_rate))
-            print(len(sims))
-            # print(included_data_on_b * len(sims_for_rate))
-            # print(sum(x[1] for x in sims_for_rate))
-            # print(sum(x[1] for x in sims_for_rate) - len(sims_for_rate) * included_data_on_b)
-            print("__" * 100)
-            # print(results[1])
-            print("$-"*100)
+
 
