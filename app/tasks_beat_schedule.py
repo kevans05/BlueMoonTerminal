@@ -224,6 +224,10 @@ def beat_schedule_organize_sims_and_rates(self):
                     a.rate_plans = rate_plan[0]
                     p.rate_plans.append(a)
                     db.session.commit()
+                    print(sim[0])
+                    print(rest.update_iccid_details(account.jasper_credentials[0].username,
+                                           account.jasper_credentials[0].api_key,
+                                           account.resource_url, sim[0], {'customerCustom1': "test"}))
                 else:
                     break
 

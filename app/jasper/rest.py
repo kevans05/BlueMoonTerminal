@@ -2,7 +2,7 @@ import datetime
 
 from app import db
 from app.main import bp
-from requests import get
+from requests import get, put
 from json import loads
 from urllib.parse import quote
 
@@ -85,4 +85,16 @@ def get_cycle_to_date(username, apikey, url_hearer, iccid):
         data = loads(response.content)
         return "data",  data
     else:
+        return "error", response.status_code
+
+
+def update_iccid_details(username, apikey, url_hearer, iccid, command_data):
+    url = url_hearer + '/rws/api/v1/devices/' + iccid
+    data = {'operatorCustom1': 'CustCustom11111'}
+    response = put(url, auth=(username, apikey), json=data)
+    if response.ok:
+        data = loads(response.content)
+        return "data",  data
+    else:
+        print(response.content)
         return "error", response.status_code
