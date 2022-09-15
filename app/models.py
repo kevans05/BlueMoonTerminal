@@ -27,6 +27,7 @@ class AssociationBetweenSubscriberIdentityModuleRatePlan(db.Model):
     sim = db.relationship("SubscriberIdentityModule",
                           back_populates="rate_plans")
 
+
 class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
     __tablename__ = 'association_between_subscriber_identity_module_device'
     subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
