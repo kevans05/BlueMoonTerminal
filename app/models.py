@@ -18,20 +18,20 @@ association_between_jasper_credential_jasper_account = db.Table('association_bet
 
 class AssociationBetweenSubscriberIdentityModuleRatePlan(db.Model):
     __tablename__ = 'association_between_subscriber_identity_module_rate_plan'
-    subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
-    rate_plan_id = db.Column(db.ForeignKey('rate_plan.id'), primary_key=True)
-    date_time_of_change = db.Column(db.DateTime())
+    id = db.Column(db.Integer, primary_key=True)
+    subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'))
+    rate_plan_id = db.Column(db.ForeignKey('rate_plan.id'))
+    date_time_of_change = db.Column(db.DateTime(), default=func.now())
     rate_plans = db.relationship("RatePlan",
                                  back_populates="sims")
     sim = db.relationship("SubscriberIdentityModule",
                           back_populates="rate_plans")
 
-
 class AssociationBetweenSubscriberIdentityModuleDevice(db.Model):
     __tablename__ = 'association_between_subscriber_identity_module_device'
     subscriber_identity_module_id = db.Column(db.ForeignKey('subscriber_identity_module.id'), primary_key=True)
     device_id = db.Column(db.ForeignKey('device.id'), primary_key=True)
-    date_time_of_change = db.Column(db.DateTime())
+    date_time_of_change = db.Column(db.DateTime(), default=func.now())
     device = db.relationship("Device", back_populates="sims")
     sim = db.relationship("SubscriberIdentityModule",
                           back_populates="devices")
@@ -333,6 +333,8 @@ class SubscriberIdentityModule(db.Model):
     jasper_account_id = db.Column(db.Integer, db.ForeignKey('jasper_account.id'))
     jasper_accounts = db.relationship("JasperAccount", back_populates="subscriber_identity_modules")
 
+    def add_rate_plans(self, rate_plan):
+        self.association_between_subscriber_identity_module_rate_plans.append(AssociationBetweenSubscriberIdentityModuleRatePlan(sim=self, date_time_of_change=func.now(), rate_plans=rate_plan))
 
 class Device(db.Model):
     __tablename__ = "device"

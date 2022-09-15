@@ -45,9 +45,9 @@ def create_app(config_class=Config):
         },'beat_schedule_check_usage_b-every-1-minutes': {
             'task': 'app.tasks_beat_schedule.beat_schedule_check_usage_b',
             'schedule': 60.0
-        },'beat_schedule_organize_sims_and_rates-every-1-minutes':{
+        },'beat_schedule_organize_sims_and_rates-every-5-minutes':{
             'task': 'app.tasks_beat_schedule.beat_schedule_organize_sims_and_rates',
-            'schedule': 60.0
+            'schedule': 300.0
         },
         'beat_schedule_check_sims_connections-every-1-hour': {
             'task': 'app.tasks_beat_schedule.beat_schedule_check_sims_connections',

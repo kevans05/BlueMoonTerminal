@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_required
 
-
+import app
 from app import db
 from app.models import User, JasperAccount, JasperCredential, SubscriberIdentityModule
 from app.main import bp
@@ -55,7 +55,6 @@ def jasper_api():
         add_api_connections.apply_async(
             kwargs={"username": form.username.data, "api_key": form.api_key.data,
                     "resource_url": form.resource_url.data, "current_user_id": current_user.id})
-
 
         add_rate_plans.apply_async(
             kwargs={"username": form.username.data, "api_key": form.api_key.data,

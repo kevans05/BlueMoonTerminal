@@ -1,7 +1,7 @@
 from app import celery, db
-from app.models import JasperAccount, JasperCredential, SubscriberIdentityModule, DataUsageToDate, RatePlan, \
-    RatePlanZone, RatePlanDataUsage, RatePlanTierDataUsage, RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
-    RatePlanTierVoiceUsage, RatePlanTierCost, SubscriberIdentityModule
+from app.models import JasperAccount, JasperCredential, DataUsageToDate, RatePlan, RatePlanZone, RatePlanDataUsage, \
+    RatePlanTierDataUsage, RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, RatePlanTierVoiceUsage, \
+    RatePlanTierCost, SubscriberIdentityModule, AssociationBetweenSubscriberIdentityModuleRatePlan
 from app.jasper import rest
 from datetime import datetime
 import sys
@@ -168,17 +168,25 @@ def beat_schedule_check_usage_b(self):
                         subscriber_identity_modules_iccid.remove(iccid['iccid'])
                         subscriber_identity_module = SubscriberIdentityModule.query.filter_by(
                             iccid=iccid['iccid']).first()
+                        print(subscriber_identity_module)
                         if subscriber_identity_module is None:
+                            print("RAN")
                             subscriber_identity_module = SubscriberIdentityModule(iccid=iccid['iccid'])
                             jasper_account.subscriber_identity_modules.append(subscriber_identity_module)
+                            print("RAN 2")
+                        print("RAN 3")
                         subscriber_identity_module.data_usage_to_date.append(
                             DataUsageToDate(ctdDataUsage=iccid['dataUsage'], zones=iccid['zone'],
                                             ctdSMSUsage=iccid['smsMOUsage'] + iccid['smsMTUsage'],
                                             ctdVoiceUsage=iccid['voiceMOUsage'] + iccid['voiceMTUsage'],
                                             date_updated=iccid['date_updated']))
+                        print("RAN 4")
                         db.session.commit()
+                        print("RAN 5")
                     else:
+                        print("RAN 6")
                         account.subscriber_identity_modules.append(SubscriberIdentityModule(iccid=iccid['iccid']))
+                        print("RAN 7")
                         db.session.commit()
 
         for iccid in subscriber_identity_modules_iccid:
@@ -190,28 +198,6 @@ def beat_schedule_check_usage_b(self):
                                 date_updated=datetime.now()))
             db.session.commit()
 
-
-def find_best_rate_per_sims(sims, rate, sims_for_rate=[]):
-    included_data_on_b = metric_to_value(rate[2].included_data_unit) * rate[2].included_data
-    # print(rate[0].name)
-    # print("{IDO:.20f}".format(IDO=included_data_on_b))
-    # print("left over SIMS {}".format(len(sims)))
-    # print("SIMS LEFT {}".format( not(len(sims) == 0)))
-    new_sim = sims[0][1] > included_data_on_b
-    plan_has_enough_data = sum(x[1] for x in sims_for_rate) > len(sims_for_rate) * included_data_on_b
-    XXXX = new_sim or plan_has_enough_data
-    enough_sims =  len(sims) > 1
-    YYYY = XXXX and enough_sims
-
-    # print("NEW SIM {NS}, PLAN DATA {PD}, OR {OS}".format(NS = new_sim, PD= plan_has_enough_data, OS = XXXX))
-    # print("OR STATE {OS}, ENOUGH SIMS {ES}, AND STATE {AS}".format(OS = XXXX, ES = enough_sims, AS=YYYY))
-    if YYYY:
-        sims_for_rate.append(sims.pop(0))
-        return find_best_rate_per_sims(sims, rate, sims_for_rate)
-    else:
-        return sims, sims_for_rate
-
-
 @celery.task(bind=True)
 def beat_schedule_organize_sims_and_rates(self):
     jasper_account = JasperAccount.query.all()
@@ -219,32 +205,50 @@ def beat_schedule_organize_sims_and_rates(self):
         rate_plans = get_rate_plans_for_account_list(
             account)
         sims = sorted(get_sims_for_account_list(account), key=lambda data: data[1], reverse=True)
-        sys.setrecursionlimit(len(sims))
-        print(type(rate_plans))
+        sumof = 0
+        sumofsims = len(sims)
         for count, rate_plan in enumerate(rate_plans):
-            # sims, sims_for_rate = find_best_rate_per_sims(sims, rate_plan)
-            included_data_b = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
-            plan_data_b = 0
+            included_data = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
+            plan_data = 0
             number_of_plan = 0
-            print(rate_plans.count()-1)
-            print(count)
-            print(rate_plans.count()-1 == count)
+            sims_in_plan = []
+            # if rate_plans.count() - 1 == count:
+            #     sims_in_plan = sims[:]
+            #     sims = []
+            #     sumofsims -= len(sims_in_plan)
+            # else:
             for sim in sims:
-                if sim[1] > included_data_b or plan_data_b > number_of_plan*included_data_b:
-                    plan_data_b += sim[1]
+                if sim[1] > included_data or plan_data > number_of_plan*included_data or rate_plans.count() - 1 == count:
+                    plan_data += sim[1]
                     number_of_plan += 1
+                    sims_in_plan.append(sim)
                     sims.remove(sim)
-                elif rate_plans.count()-1 == count:
-                     plan_data_b += sim[1]
-                     number_of_plan += 1
-                     sims.remove(sim)
+                    sumofsims -= 1
+                    p = SubscriberIdentityModule.query.filter_by(iccid=sim[0]).first()
+                    a = AssociationBetweenSubscriberIdentityModuleRatePlan()
+                    a.rate_plans = rate_plan[0]
+                    p.rate_plans.append(a)
+                    # subscriber_identity_module.add_rate_plans(rate_plan[0])
+                    db.session.commit()
                 else:
                     break
-            print(rate_plan[0].name)
-            print(included_data_b)
-            print(number_of_plan*included_data_b)
-            print(plan_data_b)
-            print(number_of_plan)
+
+
+            print("-@"*100 + "-")
+            print("Plan Name: {}".format(rate_plan[0].name))
+            print("-> Per Subscriber Charge: {}".format(rate_plan[8].per_subscriber_charge))
+            print("-> Per Subscriber Data: {}".format(rate_plan[2].included_data))
+            print("-- SIMS Left: {}".format(sumofsims))
+            print("-^"*100 + "-")
+            print("-->Number of Subscribers: {}".format(len(sims_in_plan)))
+            print("-->Rate Charge: {}".format(len(sims_in_plan)*rate_plan[8].per_subscriber_charge))
+            print("-->Rate Data Included: {}".format(len(sims_in_plan) * included_data))
+            print("-->Data Used: {}".format(sum(x[1] for x in sims_in_plan)))
+            print("-->Delta: {}".format(sum(x[1] for x in sims_in_plan) - len(sims_in_plan) * included_data))
+            sumof += len(sims_in_plan)*rate_plan[8].per_subscriber_charge
+            print("--" * 100 + "-")
+        print(sumof)
+
 
 
 

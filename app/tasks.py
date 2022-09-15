@@ -1,4 +1,6 @@
 from flask import flash
+
+import app
 from app import celery, db
 from app.models import JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
     RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
@@ -158,7 +160,9 @@ def get_iccids(username, api_key, resource_url):
         if list_of_iccid[0] == "data":
             for iccid in list_of_iccid[1]:
                 subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid['iccid']).first()
+                print(subscriber_identity_module)
                 if subscriber_identity_module is None:
+                    print("ran")
                     jasper_account.subscriber_identity_modules.append(SubscriberIdentityModule(iccid=iccid['iccid']))
     db.session.commit()
 
