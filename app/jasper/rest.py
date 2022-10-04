@@ -96,5 +96,4 @@ def update_iccid_details(username, apikey, url_hearer, iccid, command_data):
         data = loads(response.content)
         return "data",  data
     else:
-        print(response.content)
-        return "error", response.status_code
+        return "error", response.status_code, response.content

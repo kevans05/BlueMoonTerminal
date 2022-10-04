@@ -149,54 +149,6 @@ def beat_schedule_check_usage_a(self):
                 db.session.commit()
 
 
-# @celery.task(bind=True)
-# def beat_schedule_check_usage_b(self):
-#     # gets a list of all jasper accounts
-#     jasper_account = JasperAccount.query.all()
-#     # goes threw the list of accounts
-#     for account in jasper_account:
-#         # makes a list of all the sims in the database
-#         subscriber_identity_modules_iccid = [subscriber_identity_modules.iccid for subscriber_identity_modules in
-#                                              account.subscriber_identity_modules]
-#         for rate_plan in account.rate_plans:
-#             list_of_iccid = rest.get_usage_by_rate_plan(account.jasper_credentials[0].username,
-#                                                         account.jasper_credentials[0].api_key, account.resource_url,
-#                                                         rate_plan.name)
-#             if list_of_iccid[0] == "data":
-#                 for iccid in list_of_iccid[1]:
-#                     if iccid['iccid'] in subscriber_identity_modules_iccid:
-#                         subscriber_identity_modules_iccid.remove(iccid['iccid'])
-#                         subscriber_identity_module = SubscriberIdentityModule.query.filter_by(
-#                             iccid=iccid['iccid']).first()
-#                         print(subscriber_identity_module)
-#                         if subscriber_identity_module is None:
-#                             print("RAN")
-#                             subscriber_identity_module = SubscriberIdentityModule(iccid=iccid['iccid'])
-#                             jasper_account.subscriber_identity_modules.append(subscriber_identity_module)
-#                             print("RAN 2")
-#                         print("RAN 3")
-#                         subscriber_identity_module.data_usage_to_date.append(
-#                             DataUsageToDate(ctdDataUsage=iccid['dataUsage'], zones=iccid['zone'],
-#                                             ctdSMSUsage=iccid['smsMOUsage'] + iccid['smsMTUsage'],
-#                                             ctdVoiceUsage=iccid['voiceMOUsage'] + iccid['voiceMTUsage'],
-#                                             date_updated=iccid['date_updated']))
-#                         print("RAN 4")
-#                         db.session.commit()
-#                         print("RAN 5")
-#                     else:
-#                         print("RAN 6")
-#                         account.subscriber_identity_modules.append(SubscriberIdentityModule(iccid=iccid['iccid']))
-#                         print("RAN 7")
-#                         db.session.commit()
-#
-#         for iccid in subscriber_identity_modules_iccid:
-#             subscriber_identity_module = SubscriberIdentityModule.query.filter_by(iccid=iccid).first()
-#             subscriber_identity_module.data_usage_to_date.append(
-#                 DataUsageToDate(ctdDataUsage=0,
-#                                 ctdSMSUsage=0,
-#                                 ctdVoiceUsage=0,
-#                                 date_updated=datetime.now()))
-#             db.session.commit()
 
 @celery.task(bind=True)
 def beat_schedule_organize_sims_and_rates(self):
@@ -219,15 +171,16 @@ def beat_schedule_organize_sims_and_rates(self):
                     sims_in_plan.append(sim)
                     sims.remove(sim)
                     sumofsims -= 1
-                    p = SubscriberIdentityModule.query.filter_by(iccid=sim[0]).first()
-                    a = AssociationBetweenSubscriberIdentityModuleRatePlan()
-                    a.rate_plans = rate_plan[0]
-                    p.rate_plans.append(a)
+                    target_subscriber_identify_module = SubscriberIdentityModule.query.filter_by(iccid=sim[0]).first()
+                    association_between_subscriber_identity_module_rate_plan_object = \
+                        AssociationBetweenSubscriberIdentityModuleRatePlan()
+                    association_between_subscriber_identity_module_rate_plan_object.rate_plans = rate_plan[0]
+                    target_subscriber_identify_module.rate_plans.append\
+                        (association_between_subscriber_identity_module_rate_plan_object)
+                    rest.update_iccid_details(account.jasper_credentials[0].username,
+                                              account.jasper_credentials[0].api_key,
+                                              account.resource_url, sim[0], {'ratePlan': rate_plan[0].name})
                     db.session.commit()
-                    print(sim[0])
-                    print(rest.update_iccid_details(account.jasper_credentials[0].username,
-                                           account.jasper_credentials[0].api_key,
-                                           account.resource_url, sim[0], {'ratePlan': rate_plan[0].name}))
                 else:
                     break
 
