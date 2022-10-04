@@ -90,8 +90,8 @@ def get_cycle_to_date(username, apikey, url_hearer, iccid):
 
 def update_iccid_details(username, apikey, url_hearer, iccid, command_data):
     url = url_hearer + '/rws/api/v1/devices/' + iccid
-    data = {'operatorCustom1': 'CustCustom11111'}
-    response = put(url, auth=(username, apikey), json=data)
+    # data = {'operatorCustom1': 'CustCustom11111'}
+    response = put(url, auth=(username, apikey), json=command_data)
     if response.ok:
         data = loads(response.content)
         return "data",  data
