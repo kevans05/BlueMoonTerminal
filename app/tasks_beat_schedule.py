@@ -185,21 +185,6 @@ def beat_schedule_organize_sims_and_rates(self):
                     break
 
 
-            print("-@"*100 + "-")
-            print("Plan Name: {}".format(rate_plan[0].name))
-            print("-> Per Subscriber Charge: {}".format(rate_plan[8].per_subscriber_charge))
-            print("-> Per Subscriber Data: {}".format(rate_plan[2].included_data))
-            print("-- SIMS Left: {}".format(sumofsims))
-            print("-^"*100 + "-")
-            print("-->Number of Subscribers: {}".format(len(sims_in_plan)))
-            print("-->Rate Charge: {}".format(len(sims_in_plan)*rate_plan[8].per_subscriber_charge))
-            print("-->Rate Data Included: {}".format(len(sims_in_plan) * included_data))
-            print("-->Data Used: {}".format(sum(x[1] for x in sims_in_plan)))
-            print("-->Delta: {}".format(sum(x[1] for x in sims_in_plan) - len(sims_in_plan) * included_data))
-            sumof += len(sims_in_plan)*rate_plan[8].per_subscriber_charge
-            print("--" * 100 + "-")
-        print(sumof)
-
 
 
 
