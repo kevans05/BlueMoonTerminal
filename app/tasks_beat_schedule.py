@@ -1,3 +1,4 @@
+import app
 from app import celery, db
 from app.models import JasperAccount, JasperCredential, DataUsageToDate, RatePlan, RatePlanZone, RatePlanDataUsage, \
     RatePlanTierDataUsage, RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, RatePlanTierVoiceUsage, \
@@ -5,6 +6,7 @@ from app.models import JasperAccount, JasperCredential, DataUsageToDate, RatePla
 from app.jasper import rest
 from datetime import datetime
 import sys
+
 
 # @celery.on_after_configure.connect
 # def setup_periodic_tasks(sender, **kwargs):
@@ -37,7 +39,8 @@ def metric_to_value(metric):
             return 1000 ** 8
 
 
-def get_sims_for_account_list(account):
+def get_sims_for_account_list(account_id):
+    account = JasperAccount.query.filter_by(id=account_id).first()
     sim_list = []
     for sims in account.subscriber_identity_modules:
         data_to_date = DataUsageToDate.query.filter_by(sim_id=sims.id).order_by(
@@ -50,7 +53,7 @@ def get_sims_for_account_list(account):
 
 
 def get_rate_plans_for_account_list(account):
-    return db.session.query(RatePlan).filter_by(jasper_account_id=account.id).outerjoin(RatePlanZone, RatePlan.id ==
+    return db.session.query(RatePlan).filter_by(jasper_account_id=account).outerjoin(RatePlanZone, RatePlan.id ==
                                                                                         RatePlanZone.rate_plan_id).add_entity(
         RatePlanZone).outerjoin(
         RatePlanDataUsage, RatePlanZone.id ==
@@ -149,42 +152,55 @@ def beat_schedule_check_usage_a(self):
                 db.session.commit()
 
 
-
 @celery.task(bind=True)
-def beat_schedule_organize_sims_and_rates(self):
+def beat_schedule_optimize_by_accounts(self):
     jasper_account = JasperAccount.query.all()
     for account in jasper_account:
-        rate_plans = get_rate_plans_for_account_list(
-            account)
-        sims = sorted(get_sims_for_account_list(account), key=lambda data: data[1], reverse=True)
-        sumof = 0
-        sumofsims = len(sims)
-        for count, rate_plan in enumerate(rate_plans):
-            included_data = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
-            plan_data = 0
-            number_of_plan = 0
-            sims_in_plan = []
-            for sim in sims:
-                if sim[1] > included_data or plan_data > number_of_plan*included_data or rate_plans.count() - 1 == count:
-                    plan_data += sim[1]
-                    number_of_plan += 1
-                    sims_in_plan.append(sim)
-                    sims.remove(sim)
-                    sumofsims -= 1
-                    target_subscriber_identify_module = SubscriberIdentityModule.query.filter_by(iccid=sim[0]).first()
-                    association_between_subscriber_identity_module_rate_plan_object = \
-                        AssociationBetweenSubscriberIdentityModuleRatePlan()
-                    association_between_subscriber_identity_module_rate_plan_object.rate_plans = rate_plan[0]
-                    target_subscriber_identify_module.rate_plans.append\
-                        (association_between_subscriber_identity_module_rate_plan_object)
-                    rest.update_iccid_details(account.jasper_credentials[0].username,
-                                              account.jasper_credentials[0].api_key,
-                                              account.resource_url, sim[0], {'ratePlan': rate_plan[0].name})
-                    db.session.commit()
-                else:
-                    break
+        beat_schedule_optimize_account.apply_async(kwargs={"account": account.id})
+        # beat_schedule_optimize_by_accounts.apply_async(object=)
+
+
+@celery.task(bind=True)
+def beat_schedule_optimize_account(self, account):
+    rate_plans = get_rate_plans_for_account_list(
+        account).all()
+    sims = sorted(get_sims_for_account_list(account), key=lambda data: data[1], reverse=True)
+
+
+    # optimize_by_rate_plan(account=account, rate_plans=rate_plans, sims=sims)
 
 
 
+def optimize_by_rate_plan(self,account, rate_plans, sims):
+    rate_plan = rate_plans[0]
+    included_data = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
+    plan_data = 0
+    number_of_plan = 0
+    sims_in_plan = []
+    for sim in sims:
+            if sim[1] > included_data or plan_data > number_of_plan * included_data or len(rate_plans) == 1:
+                plan_data += sim[1]
+                number_of_plan += 1
+                sims_in_plan.append(sim)
+                sims.remove(sim)
+            else:
+                break
 
+
+@celery.task(bind=True)
+def beat_schedule_add_target_subscriber_identify_module_to_rate_plan(self, rate_plan, sim):
+    target_subscriber_identify_module = SubscriberIdentityModule.query.filter_by(iccid=sim[0]).first()
+    association_between_subscriber_identity_module_rate_plan_object = \
+        AssociationBetweenSubscriberIdentityModuleRatePlan()
+    association_between_subscriber_identity_module_rate_plan_object.rate_plans = rate_plan[0]
+    target_subscriber_identify_module.rate_plans.append \
+        (association_between_subscriber_identity_module_rate_plan_object)
+    db.session.commit()
+
+
+@celery.task(bind=True)
+def beat_schedule_upload_to_jasper(self, account, rate_plan, sim):
+    rest.update_iccid_details(account.jasper_credentials[0].username,
+                              account.jasper_credentials[0].api_key,
+                              account.resource_url, sim[0], {'ratePlan': rate_plan[0].name})
 
