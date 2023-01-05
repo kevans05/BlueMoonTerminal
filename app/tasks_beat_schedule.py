@@ -179,36 +179,32 @@ def beat_schedule_optimize_account(self, account):
 
 #this is the optimization tool, it has a lot of logging in it
 def optimize_by_rate_plan(account, rate_plans, sims):
-    rate_plan = rate_plans[0]
-    # rate_plans.pop(0)
-    included_data = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
+    rate_plan = rate_plans[0] # assisngs target rate plan
+    included_data = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data # assigings the data included with that plan in turems of MB
     plan_data = 0
     number_of_plan = 0
     sims_in_plan = []
-    logging.critical(rate_plan)
-    logging.critical(included_data)
-
-    for sim in sims:
-        if (sim[1] > included_data or plan_data > number_of_plan * included_data) and len(rate_plans) == 1:
-            logging.critical(sim)
-            plan_data += sim[1]
-            number_of_plan += 1
-            sims_in_plan.append(sim)
-            sims.remove(sim)
-    logging.fatal(len(sims))
-    logging.warning(len(sims_in_plan))
-    logging.info(len(rate_plans))
-    logging.warning(sim[1] > included_data )
-    logging.warning(plan_data > number_of_plan * included_data)
-    logging.warning(len(rate_plans) == 0)
-    logging.warning(sim[1] > included_data or plan_data > number_of_plan * included_data or len(rate_plans) == 0)
-    if len(rate_plans) > 1:
-        optimize_by_rate_plan(account,rate_plans[1:],sims)
+    if len(rate_plans) > 1: # as long as its not the last rateplan in the system sort the system
+        for sim in sims:
+            if sim[1] > included_data or plan_data > number_of_plan * included_data:
+                logging.critical(sim)
+                plan_data += sim[1]
+                number_of_plan += 1
+                sims_in_plan.append(sim)
+                sims.remove(sim)
+                beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan,sim)
+                beat_schedule_upload_to_jasper(account, rate_plan,sim)
+        optimize_by_rate_plan(account, rate_plans[1:], sims) #recusivly look at the plans
+    elif len(rate_plans) == 1: # if it is the last rateplan in the system, add them all remaining to the last plan
+        sims_in_plan.extend(sims)
+        sims.clear()
+        for sim in sims_in_plan:
+            beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan, sim)
+            beat_schedule_upload_to_jasper(account, rate_plan, sim)
 
 
-
-@celery.task(bind=True)
-def beat_schedule_add_target_subscriber_identify_module_to_rate_plan(self, rate_plan, sim):
+#logs the upload change in rate  plane
+def beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan, sim):
     target_subscriber_identify_module = SubscriberIdentityModule.query.filter_by(iccid=sim[0]).first()
     association_between_subscriber_identity_module_rate_plan_object = \
         AssociationBetweenSubscriberIdentityModuleRatePlan()
@@ -218,10 +214,10 @@ def beat_schedule_add_target_subscriber_identify_module_to_rate_plan(self, rate_
     db.session.commit()
 
 
-@celery.task(bind=True)
-def beat_schedule_upload_to_jasper(self, account, rate_plan, sim):
-    x = rest.update_iccid_details(account.jasper_credentials[0].username,
+#the function that uploads the data to the jasper website
+def beat_schedule_upload_to_jasper(account_id, rate_plan, sim):
+    account = JasperAccount.query.filter_by(id=account_id).first()
+    rest.update_iccid_details(account.jasper_credentials[0].username,
                               account.jasper_credentials[0].api_key,
                               account.resource_url, sim[0], {'ratePlan': rate_plan[0].name})
-    logging.error(x)
 
