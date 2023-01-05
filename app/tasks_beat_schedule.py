@@ -9,18 +9,6 @@ from app.jasper import rest
 from datetime import datetime
 
 
-
-# @celery.on_after_configure.connect
-# def setup_periodic_tasks(sender, **kwargs):
-#     sender.add_periodic_task(3600.0, beat_schedule_check_sims_connections.s(),
-#                              name='add-every-1-hour')
-#     sender.add_periodic_task(60.0, beat_schedule_check_api_connections.s(),
-#                              name='add-every-minute')
-#     sender.add_periodic_task(600.0, beat_schedule_check_usage_a.s(),
-#                              name='add-every-10-minutes')
-
-
-
 #converts the function
 def metric_to_value(metric):
     match metric:
@@ -192,18 +180,19 @@ def optimize_by_rate_plan(account, rate_plans, sims):
                 number_of_plan += 1
                 sims_in_plan.append(sim)
                 sims.remove(sim)
-                beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan,sim)
+                beat_schedule_add_target_subscriber_identify_module_to_rate_plan(kwargs={"rate_plan":rate_plan,"sim":sim})
                 beat_schedule_upload_to_jasper(account, rate_plan,sim)
         optimize_by_rate_plan(account, rate_plans[1:], sims) #recusivly look at the plans
     elif len(rate_plans) == 1: # if it is the last rateplan in the system, add them all remaining to the last plan
         sims_in_plan.extend(sims)
         sims.clear()
         for sim in sims_in_plan:
-            beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan, sim)
+            beat_schedule_add_target_subscriber_identify_module_to_rate_plan(kwargs={"rate_plan":rate_plan,"sim":sim})
             beat_schedule_upload_to_jasper(account, rate_plan, sim)
 
 
-#logs the upload change in rate  plane
+#logs the upload change in rate  plan, gets the targert SIM from the database, will add the current rateplan assosaition
+@celery.task(bind=True)
 def beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan, sim):
     target_subscriber_identify_module = SubscriberIdentityModule.query.filter_by(iccid=sim[0]).first()
     association_between_subscriber_identity_module_rate_plan_object = \
