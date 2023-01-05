@@ -9,6 +9,8 @@ from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
 from celery import Celery
 from config import Config
+import sys
+
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -26,6 +28,9 @@ mail = Mail()
 celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, result_backend=Config.RESULT_BACKEND, include=['app.tasks'
     , 'app.tasks_beat_schedule'])
 
+
+"""Enabling a recursion depth of 1500 """
+sys.setrecursionlimit(20000)
 
 def create_app(config_class=Config):
     app = Flask(__name__)

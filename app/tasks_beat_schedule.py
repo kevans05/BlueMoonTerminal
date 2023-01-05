@@ -1,3 +1,5 @@
+import logging
+
 import app
 from app import celery, db
 from app.models import JasperAccount, JasperCredential, DataUsageToDate, RatePlan, RatePlanZone, RatePlanDataUsage, \
@@ -5,7 +7,7 @@ from app.models import JasperAccount, JasperCredential, DataUsageToDate, RatePla
     RatePlanTierCost, SubscriberIdentityModule, AssociationBetweenSubscriberIdentityModuleRatePlan
 from app.jasper import rest
 from datetime import datetime
-import sys
+
 
 
 # @celery.on_after_configure.connect
@@ -17,6 +19,9 @@ import sys
 #     sender.add_periodic_task(600.0, beat_schedule_check_usage_a.s(),
 #                              name='add-every-10-minutes')
 
+
+
+#converts the function
 def metric_to_value(metric):
     match metric:
         case 'B':
@@ -74,6 +79,8 @@ def get_rate_plans_for_account_list(account):
                                           RatePlanTierCost.rate_plan_id).add_entity(RatePlanTierCost).order_by(
         RatePlanDataUsage.included_data.desc())
 
+
+#function checks to see if the API connection is able to be made
 
 @celery.task(bind=True)
 def beat_schedule_check_api_connections(self):
@@ -165,26 +172,39 @@ def beat_schedule_optimize_account(self, account):
     rate_plans = get_rate_plans_for_account_list(
         account).all()
     sims = sorted(get_sims_for_account_list(account), key=lambda data: data[1], reverse=True)
+    optimize_by_rate_plan(account=account, rate_plans=rate_plans, sims=sims)
 
 
-    # optimize_by_rate_plan(account=account, rate_plans=rate_plans, sims=sims)
 
 
-
-def optimize_by_rate_plan(self,account, rate_plans, sims):
+#this is the optimization tool, it has a lot of logging in it
+def optimize_by_rate_plan(account, rate_plans, sims):
     rate_plan = rate_plans[0]
+    # rate_plans.pop(0)
     included_data = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
     plan_data = 0
     number_of_plan = 0
     sims_in_plan = []
+    logging.critical(rate_plan)
+    logging.critical(included_data)
+
     for sim in sims:
-            if sim[1] > included_data or plan_data > number_of_plan * included_data or len(rate_plans) == 1:
-                plan_data += sim[1]
-                number_of_plan += 1
-                sims_in_plan.append(sim)
-                sims.remove(sim)
-            else:
-                break
+        if (sim[1] > included_data or plan_data > number_of_plan * included_data) and len(rate_plans) == 1:
+            logging.critical(sim)
+            plan_data += sim[1]
+            number_of_plan += 1
+            sims_in_plan.append(sim)
+            sims.remove(sim)
+    logging.fatal(len(sims))
+    logging.warning(len(sims_in_plan))
+    logging.info(len(rate_plans))
+    logging.warning(sim[1] > included_data )
+    logging.warning(plan_data > number_of_plan * included_data)
+    logging.warning(len(rate_plans) == 0)
+    logging.warning(sim[1] > included_data or plan_data > number_of_plan * included_data or len(rate_plans) == 0)
+    if len(rate_plans) > 1:
+        optimize_by_rate_plan(account,rate_plans[1:],sims)
+
 
 
 @celery.task(bind=True)
@@ -200,7 +220,8 @@ def beat_schedule_add_target_subscriber_identify_module_to_rate_plan(self, rate_
 
 @celery.task(bind=True)
 def beat_schedule_upload_to_jasper(self, account, rate_plan, sim):
-    rest.update_iccid_details(account.jasper_credentials[0].username,
+    x = rest.update_iccid_details(account.jasper_credentials[0].username,
                               account.jasper_credentials[0].api_key,
                               account.resource_url, sim[0], {'ratePlan': rate_plan[0].name})
+    logging.error(x)
 
