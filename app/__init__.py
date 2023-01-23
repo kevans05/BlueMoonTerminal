@@ -52,7 +52,7 @@ def create_app(config_class=Config):
             'schedule': 3600.0
         },'beat_schedule_organize_sims_and_rates-every-2-hours':{
             'task': 'app.tasks_beat_schedule.beat_schedule_optimize_by_accounts',
-            'schedule': 7200.0
+            'schedule': 3600.0
         },
         'beat_schedule_check_sims_connections-every-1-hour': {
             'task': 'app.tasks_beat_schedule.beat_schedule_check_sims_connections',
