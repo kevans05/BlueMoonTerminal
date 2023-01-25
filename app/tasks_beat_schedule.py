@@ -176,13 +176,14 @@ def optimize_by_rate_plan(account, rate_plans, sims):
     sims_in_plan = []
     if len(rate_plans) > 1: # as long as its not the last rateplan in the system sort the system
         for sim in sims:
-            if sim[1] > included_data or plan_data > number_of_plan * included_data:
-                logging.critical(sim)
+            if sim[1] > included_data or plan_data > (number_of_plan * included_data):
                 plan_data += sim[1]
                 number_of_plan += 1
                 sims_in_plan.append(sim)
                 sims.remove(sim)
-                logging.critical(rate_plan)
+                logging.WARNING("SIM:" + sim[0] + " is in " + rate_plan + " @" + datetime.now())
+                logging.WARNING("Included data " + included_data)
+                logging.WARNING("Plan Data" + plan_data)
                 beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan,sim)
                 beat_schedule_upload_to_jasper(account, rate_plan,sim)
         optimize_by_rate_plan(account, rate_plans[1:], sims) #recusivly look at the plans
