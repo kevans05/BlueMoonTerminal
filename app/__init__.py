@@ -49,7 +49,7 @@ def create_app(config_class=Config):
             'schedule': 60.0
         },'beat_schedule_check_usage_b-every-60-minutes': {
             'task': 'app.tasks_beat_schedule.beat_schedule_check_usage_a',
-            'schedule': 3600.0
+            'schedule': 120.0
         },'beat_schedule_organize_sims_and_rates-every-2-hours':{
             'task': 'app.tasks_beat_schedule.beat_schedule_optimize_by_accounts',
             'schedule': 300.0
