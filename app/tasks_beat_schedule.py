@@ -171,20 +171,26 @@ def optimize_by_rate_plan(account, rate_plans, sims):
     rate_plan = rate_plans[0]
     logging.critical(rate_plan[0].name)
     included_data = metric_to_value(rate_plan[2].included_data_unit) * rate_plan[2].included_data
-    logging.critical("Included data " + str(included_data))
+    logging.debug("Included data " + str(included_data))
     plan_data = 0
     number_of_plan = 0
     sims_in_plan = []
     # as long as its not the last rateplan in the system sort the system
     if len(rate_plans) > 1:
         for sim in sims:
-            plan_data += sim[1]
-            number_of_plan += 1
+            logging.debug(sim)
             if sim[1] > included_data or ((number_of_plan * included_data) - plan_data) < 0:
+                logging.debug("passed")
+                logging.debug(plan_data)
+                logging.debug((number_of_plan * included_data))
+                logging.debug(((number_of_plan * included_data) - plan_data))
+                plan_data += sim[1]
+                number_of_plan += 1
                 sims_in_plan.append(sim)
                 beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan, sim)
                 beat_schedule_upload_to_jasper(account, rate_plan, sim)
             else:
+                logging.debug("next")
                 break
         res = [i for i in sims if i not in sims_in_plan]
         optimize_by_rate_plan(account, rate_plans[1:], res)
