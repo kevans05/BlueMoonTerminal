@@ -87,3 +87,18 @@ def subscriber_identity_module(token):
         db.session.commit()
     return render_template('subscriber_identity_module.html', title='Subscriber Identity Module', form=form,
                            jasper_account=jasper_account)
+
+@bp.route('/<token>/rate_plans', methods=['GET', 'POST'])
+@login_required
+def rate_plans(token):
+    jasper_account = JasperAccount.verify_id_token(token)
+    return render_template('rate_plan.html', title='Rate Plans',
+                           jasper_account=jasper_account)
+
+
+@bp.route('/<token>/latest_estimation', methods=['GET', 'POST'])
+@login_required
+def latest_estimation(token):
+    jasper_account = JasperAccount.verify_id_token(token)
+    return render_template('rate_plan.html', title='Latest Estimation',
+                           jasper_account=jasper_account)

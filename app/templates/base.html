@@ -12,8 +12,8 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'css/tables.css') }}">
 
     {% block navbar %}
-        <nav class="navbar navbar-default">
-            <div class="container-fluid" , style="width: 85%">
+        <nav class="navbar navbar-default" style="margin-bottom: 0">
+            <div class="container-fluid">
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
                             data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
@@ -41,10 +41,9 @@
                                             {{ account.resource_url }} ▼
                                         </a>
                                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                            <li><a href="#">API Connection</a></li>
-                                            <li><a href="#">Rate Plan</a></li>
+                                            <li><a href="{{ url_for('main.rate_plans', token=account.get_id_token() ) }}">Rate Plan</a></li>
                                             <li><a href="{{ url_for('main.subscriber_identity_module', token=account.get_id_token() ) }}">Subscriber Identity Module</a></li>
-                                            <li><a href="#">Devices</a> </li>
+                                            <li><a href="{{ url_for('main.latest_estimation', token=account.get_id_token() ) }}">Last Estimation</a></li>
                                         </ul>
                                     </li>
                                 {% endfor %}
@@ -75,7 +74,7 @@
     {% endblock %}
 
     {% block content %}
-        <div class="container-fluid" , style="width: 85%">
+        <div>
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
                     {% for message in messages %}
@@ -90,7 +89,6 @@
     {% endblock %}
 
     {% block scripts %}
-
         <script type="text/javascript" charset="utf8"
                 src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
                 integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
@@ -105,4 +103,7 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
                 integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
                 crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+        <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
     {% endblock scripts %}

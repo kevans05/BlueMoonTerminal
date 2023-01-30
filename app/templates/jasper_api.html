@@ -2,61 +2,57 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-
-    <div class="container">
-        <div class="row">
-            <h1>Jasper APIs</h1>
-        </div>
-        <div class="row">
-            <div class="col-sm-2">
-
-                <a class="btn btn-primary" data-toggle="collapse" href="#AddJasperAPI" role="button"
-                   aria-expanded="false" aria-controls="JasperAPIcollapse">
+    <nav class="navbar navbar-default" style="margin-top: 0">
+        <div class="nav navbar-nav navbar-left" id="navbar-collapse">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="collapse" href="#AddJasperAPI">
                     Add Jasper API
                 </a>
-                <br>
-                {% if available_apis is not none %}
-                    <a class="btn btn-primary" data-toggle="collapse" href="#ViewJasperAPI" role="button"
-                       aria-expanded="false" aria-controls="JasperAPIcollapse">
+            </li>
+
+            {% if available_apis is not none %}
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="collapse" href="#ViewJasperAPI">
                         Exiting Jasper APIs
                     </a>
-                {% endif %}
-            </div>
-            <div class="col-sm-10">
-                <div class="collapse" id="AddJasperAPI">
-                    <div class="card card-body">
-                        <div class="jumbotron jumbotron-fluid">
-                            {{ wtf.quick_form(form) }}
-                        </div>
-                    </div>
-                </div>
+                </li>
+            {% endif %}
 
-                <div class="collapse" id="ViewJasperAPI">
-                    <div class="card card-body">
-                        <div class="jumbotron jumbotron-fluid">
-                            <table class="dataTable display cell-border compact hover order-column stripe"
-                                   style="width:100%" id="ViewJasperAPITable">
-                                <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th>Cell Provider</th>
-                                    <th>Username</th>
-                                    <th>Resource URL</th>
-                                    <th>API Key</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% if available_apis is not none %}
-                                    {% for configured_api in available_apis %}
-                                        {% for jasper_account in configured_api.jasper_accounts %}
-                                            {% include '_current_jasper_apis.html' %}
-                                        {% endfor %}
-                                    {% endfor %}
-                                {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="collapse" id="AddJasperAPI">
+            <div class="card card-body">
+                <div class="jumbotron jumbotron-fluid">
+                    {{ wtf.quick_form(form) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="collapse" id="ViewJasperAPI">
+            <div class="card card-body">
+                <div class="jumbotron jumbotron-fluid">
+                    <table class="table table-striped"
+                           style="width:100%" id="ViewJasperAPITable">
+                        <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Cell Provider</th>
+                            <th>Username</th>
+                            <th>Resource URL</th>
+                            <th>API Key</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% if available_apis is not none %}
+                            {% for configured_api in available_apis %}
+                                {% for jasper_account in configured_api.jasper_accounts %}
+                                    {% include '_current_jasper_apis.html' %}
+                                {% endfor %}
+                            {% endfor %}
+                        {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

@@ -46,7 +46,7 @@ def get_sims_for_account_list(account_id):
 
 
 def get_rate_plans_for_account_list(account):
-    return db.session.query(RatePlan).filter_by(jasper_account_id=account).outerjoin(RatePlanZone, RatePlan.id ==
+    return db.session.query(RatePlan).filter_by(jasper_account_id=account, active = True).outerjoin(RatePlanZone, RatePlan.id ==
                                                                                         RatePlanZone.rate_plan_id).add_entity(
         RatePlanZone).outerjoin(
         RatePlanDataUsage, RatePlanZone.id ==
@@ -180,7 +180,6 @@ def optimize_by_rate_plan(account, rate_plans, sims):
         for sim in sims:
             logging.debug(sim)
             if sim[1] > included_data or ((number_of_plan * included_data) - plan_data) < 0:
-                logging.debug("passed")
                 logging.debug(plan_data)
                 logging.debug((number_of_plan * included_data))
                 logging.debug(((number_of_plan * included_data) - plan_data))
@@ -190,7 +189,6 @@ def optimize_by_rate_plan(account, rate_plans, sims):
                 beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan, sim)
                 beat_schedule_upload_to_jasper(account, rate_plan, sim)
             else:
-                logging.debug("next")
                 break
         res = [i for i in sims if i not in sims_in_plan]
         optimize_by_rate_plan(account, rate_plans[1:], res)
