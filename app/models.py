@@ -337,6 +337,18 @@ class SubscriberIdentityModule(db.Model):
     def add_rate_plans(self, rate_plan):
         self.association_between_subscriber_identity_module_rate_plans.append(AssociationBetweenSubscriberIdentityModuleRatePlan(sim=self, date_time_of_change=func.now(), rate_plans=rate_plan))
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'iccid': self.iccid,
+            'imei': self.imei,
+            'imsi': self.imsi,
+            'status': self.status,
+            'fixed_ip_address': self.fixed_ip_address
+        }
+
+
+
 class Device(db.Model):
     __tablename__ = "device"
     id = db.Column(db.Integer, primary_key=True)

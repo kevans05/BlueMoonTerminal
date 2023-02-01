@@ -2,13 +2,14 @@ from datetime import datetime
 
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_required
-
+import logging
 import app
 from app import db
 from app.models import User, JasperAccount, JasperCredential, SubscriberIdentityModule
 from app.main import bp
-from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids
-from app.main.forms import EditProfileForm, AddJasperAPIForm, AddSIMs
+from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids, get_rate_plans_for_account_list_all
+from app.main.forms import EditProfileForm, AddJasperAPIForm, AddSIMs, ChangeRatePlan
+from app.tasks_beat_schedule import metric_to_value
 
 
 @bp.before_app_request
@@ -92,13 +93,39 @@ def subscriber_identity_module(token):
 @login_required
 def rate_plans(token):
     jasper_account = JasperAccount.verify_id_token(token)
-    return render_template('rate_plan.html', title='Rate Plans',
-                           jasper_account=jasper_account)
+    rate_plans = get_rate_plans_for_account_list_all(jasper_account.id)
+    for rate in rate_plans:
+        logging.critical(rate[0].name)
+        logging.critical(rate[0].subscription_charge)
+        logging.critical(rate[0].active)
+        logging.critical(metric_to_value(rate[2].included_data_unit) * rate[2].included_data)
+
+    return render_template('rate_plan.html', title='Rate Plans', jasper_account=jasper_account)
 
 
 @bp.route('/<token>/latest_estimation', methods=['GET', 'POST'])
 @login_required
 def latest_estimation(token):
     jasper_account = JasperAccount.verify_id_token(token)
+
     return render_template('rate_plan.html', title='Latest Estimation',
                            jasper_account=jasper_account)
+
+
+@bp.route('/api/data/<token>/rate_plans')
+@login_required
+def data_rate_plans(token):
+    jasper_account = JasperAccount.verify_id_token(token)
+    rate_plans = []
+
+    for rate in get_rate_plans_for_account_list_all(jasper_account.id):
+        rate_plans.append({"PlanName":rate[0].name, "SubscriptionCharge":rate[0].subscription_charge,
+                           "Data":metric_to_value(rate[2].included_data_unit) * rate[2].included_data,
+                           "Status":"Active" if rate[0].active else "Deactivated"})
+    return {'data': rate_plans}
+
+@bp.route('/api/data/<token>/sim')
+@login_required
+def data_SIM(token):
+    jasper_account = JasperAccount.verify_id_token(token)
+    return {'data': [sims.to_dict() for sims in jasper_account.subscriber_identity_modules]}

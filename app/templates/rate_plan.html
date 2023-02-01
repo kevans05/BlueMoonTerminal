@@ -18,23 +18,54 @@
         <div class="collapse" id="ViewRatePlans">
             <div class="card card-body">
                 <div class="jumbotron jumbotron-fluid">
-                    <table class="table table-striped"
-                           style="width:100%" id="ViewJasperAPITable">
-                        <thead>
-                        <tr>
-                            <th>Plan Name</th>
-                            <th>Subscription Charge</th>
-                            <th>Status</th>
-                            <th>Change Status</th>
-                            <th>Override Data</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                                {% for rate_plans in jasper_account.rate_plans %}
-                                        {% include '_rate_plans.html' %}
-                                {% endfor %}
-                        </tbody>
-                    </table>
+                    <div id="table"></div>
+
+                    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+                    <script>
+                        const formatter = new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: 'CAD',
+
+                            // These options are needed to round to whole numbers if that's what you want.
+                            //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
+                            //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
+                        });
+
+
+                        function formatBytes(bytes, decimals) {
+                            if (bytes == 0) return '0 Bytes';
+                            var k = 1000,
+                                dm = decimals || 2,
+                                sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+                                i = Math.floor(Math.log(bytes) / Math.log(k));
+                            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+                        }
+
+                        var v = '{{ jasper_account.get_id_token() }}';
+                        new gridjs.Grid({
+                            columns: [
+                                {id: 'PlanName', name: 'Plan Name'},
+                                {
+                                    id: 'SubscriptionCharge',
+                                    name: 'Subscription Charge',
+                                    formatter: (cell) => `${formatter.format(cell)}`
+                                },
+                                {id: 'Data', name: 'Data',
+                                    formatter: (cell) => `${formatBytes(cell, 2)}`
+                                },
+                                {id: 'Status', name: 'Status'},
+                            ],
+                            server: {
+                                url: '/api/data/'.concat(v, '/rate_plans'),
+                                then: results => results.data,
+                            },
+                            search: {
+                                selector: (cell, rowIndex, cellIndex) => [0, 1, 4].includes(cellIndex) ? cell : null,
+                            },
+                            sort: true,
+                            pagination: true,
+                        }).render(document.getElementById('table'));
+                    </script>
                 </div>
             </div>
         </div>

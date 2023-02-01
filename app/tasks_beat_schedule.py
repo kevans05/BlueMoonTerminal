@@ -45,7 +45,7 @@ def get_sims_for_account_list(account_id):
     return sim_list
 
 
-def get_rate_plans_for_account_list(account):
+def get_rate_plans_for_account_list_active(account):
     return db.session.query(RatePlan).filter_by(jasper_account_id=account, active = True).outerjoin(RatePlanZone, RatePlan.id ==
                                                                                         RatePlanZone.rate_plan_id).add_entity(
         RatePlanZone).outerjoin(
@@ -159,7 +159,7 @@ def beat_schedule_optimize_by_accounts(self):
 @celery.task()
 def beat_schedule_optimize_account(**kwargs):
     account = kwargs['account']
-    rate_plans = get_rate_plans_for_account_list(
+    rate_plans = get_rate_plans_for_account_list_active(
         account).all()
     sims = sorted(get_sims_for_account_list(account), key=lambda data: data[1], reverse=True)
 

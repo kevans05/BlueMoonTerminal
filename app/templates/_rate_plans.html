@@ -1,7 +1,11 @@
 <tr>
     <td>{{ rate_plans.name }}</td>
-    <td>{{ "${:,.2f}".format(rate_plans.subscription_charge) }}/device</td>
-    <td>{% if rate_plans.active %}Active{% else %}Deactivated{% endif %}</td>
-    <td></td>
-    <td></td>
+    <td style="text-align: center;">{{ "${:,.2f}".format(rate_plans.subscription_charge) }}/device</td>
+    <td style="text-align: center;">{% if rate_plans.active %}Active{% else %}Deactivated{% endif %}</td>
+    <td style="text-align: center;">
+        <input class="form-check-input" type="checkbox" value={{ rate_plans.name  }} id={{ rate_plans.name }} {% if rate_plans.active %}checked{% else %}{% endif %}>
+    </td>
+    <td style="text-align: center;">
+        <input type="text" class="form-control-plaintext" id={{ rate_plans.name  }} value="0B">
+    </td>
 </tr>

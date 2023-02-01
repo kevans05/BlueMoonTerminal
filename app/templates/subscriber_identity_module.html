@@ -21,38 +21,65 @@
         </div>
     </nav>
     <div class="container">
-                <div class="collapse" id="AddSIMsManually">
-                    <div class="card card-body">
-                        <div class="jumbotron jumbotron-fluid">
-                            {{ wtf.quick_form(form) }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="collapse" id="ViewJasperAPI">
-                    <div class="card card-body">
-                        <div class="jumbotron jumbotron-fluid">
-                            <table class="table table-striped"
-                                   style="width:100%" id="ViewSIMTable">
-                                <thead>
-                                <tr>
-                                    <th>ICCID</th>
-                                    <th>IMEI</th>
-                                    <th>Communication Plan</th>
-                                    <th>Fixed IP Address</th>
-                                    <th>Status</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for sims in jasper_account.subscriber_identity_modules %}
-                                        {% include '_subscriber_identity_module.html' %}
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        <div class="collapse" id="AddSIMsManually">
+            <div class="card card-body">
+                <div class="jumbotron jumbotron-fluid">
+                    {{ wtf.quick_form(form) }}
                 </div>
             </div>
+        </div>
+
+        <div class="collapse" id="ViewJasperAPI">
+            <div class="card card-body">
+                <div class="jumbotron jumbotron-fluid">
+                    <div id="table"></div>
+                    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+                    <script>
+                        var v = '{{ jasper_account.get_id_token() }}';
+                        new gridjs.Grid({
+                            columns: [
+                                {id: 'iccid', name: 'ICCID'},
+                                {
+                                    id: 'imei',
+                                    name: 'IMEI',
+                                },
+                                {
+                                    id: 'fixed_ip_address', name: 'Fixed IP Address',
+                                },
+                                {id: 'status', name: 'Status'},
+                            ],
+                            server: {
+                                url: '/api/data/'.concat(v, '/sim'),
+                                then: results => results.data,
+                            },
+                            search: {
+                                selector: (cell, rowIndex, cellIndex) => [0, 1, 4].includes(cellIndex) ? cell : null,
+                            },
+                            sort: true,
+                            pagination: true,
+                        }).render(document.getElementById('table'));
+                    </script>
+                    {#                            <table class="table table-striped"#}
+                    {#                                   style="width:100%" id="ViewSIMTable">#}
+                    {#                                <thead>#}
+                    {#                                <tr>#}
+                    {#                                    <th>ICCID</th>#}
+                    {#                                    <th>IMEI</th>#}
+                    {#                                    <th>Communication Plan</th>#}
+                    {#                                    <th>Fixed IP Address</th>#}
+                    {#                                    <th>Status</th>#}
+                    {#                                </tr>#}
+                    {#                                </thead>#}
+                    {#                                <tbody>#}
+                    {#                                {% for sims in jasper_account.subscriber_identity_modules %}#}
+                    {#                                        {% include '_subscriber_identity_module.html' %}#}
+                    {#                                {% endfor %}#}
+                    {#                                </tbody>#}
+                    {#                            </table>#}
+                </div>
+            </div>
+        </div>
+    </div>
     </div>
 
 {% endblock %}

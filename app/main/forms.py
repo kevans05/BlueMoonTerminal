@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, TextAreaField
+from wtforms import StringField, SubmitField, PasswordField, TextAreaField, BooleanField, DecimalField
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, length, URL
 from app.models import User
 
@@ -37,4 +37,10 @@ class AddJasperAPIForm(FlaskForm):
 
 class AddSIMs(FlaskForm):
     ListOfICCID = TextAreaField('Put ICCIDs seperated by a new line')
+    submit = SubmitField('Submit')
+
+
+class ChangeRatePlan(FlaskForm):
+    active = BooleanField()
+    Override = DecimalField()
     submit = SubmitField('Submit')
