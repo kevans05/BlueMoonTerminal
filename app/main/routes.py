@@ -96,12 +96,6 @@ def subscriber_identity_module(token):
 def rate_plans(token):
     jasper_account = JasperAccount.verify_id_token(token)
     rate_plans = get_rate_plans_for_account_list_all(jasper_account.id)
-    for rate in rate_plans:
-        logging.critical(rate[0].name)
-        logging.critical(rate[0].subscription_charge)
-        logging.critical(rate[0].active)
-        logging.critical(metric_to_value(rate[2].included_data_unit) * rate[2].included_data)
-
     return render_template('rate_plan.html', title='Rate Plans', jasper_account=jasper_account)
 
 
@@ -109,9 +103,13 @@ def rate_plans(token):
 @login_required
 def latest_estimation(token):
     jasper_account = JasperAccount.verify_id_token(token)
+    total = 0
+    for rate in get_rate_plans_for_account_list_all(jasper_account.id):
+        if rate[0].return_latest_statistics() is not None:
+            total = total + rate[0].subscription_charge * rate[0].return_latest_statistics().number_of_devices
 
     return render_template('latest_estimation.html', title='Latest Estimation',
-                           jasper_account=jasper_account)
+                           jasper_account=jasper_account, total={"total":total})
 
 
 @bp.route('/api/data/<token>/rate_plans')
@@ -139,17 +137,21 @@ def data_SIM(token):
 def data_latest_estimation(token):
     jasper_account = JasperAccount.verify_id_token(token)
     rate_plans = []
+    total = 0
     for rate in get_rate_plans_for_account_list_all(jasper_account.id):
         if rate[0].return_latest_statistics() is not None:
             rate_plans.append({"PlanName": rate[0].name, "SubscriptionCharge": rate[0].subscription_charge,
                            "Data_per_device": metric_to_value(rate[2].included_data_unit) * rate[2].included_data,
                                "Devices_in_plan": rate[0].return_latest_statistics().number_of_devices,
                                "Data_in_devices":rate[0].return_latest_statistics().sim_total_data})
+            total = total + rate[0].subscription_charge * rate[0].return_latest_statistics().number_of_devices
         else:
             rate_plans.append({"PlanName": rate[0].name, "SubscriptionCharge": rate[0].subscription_charge,
                                "Data_per_device": metric_to_value(rate[2].included_data_unit) * rate[2].included_data,
                                "Devices_in_plan": 0,
                                "Data_in_devices": 0})
+
+
     return {'data': rate_plans}
 
 
