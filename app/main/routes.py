@@ -7,7 +7,8 @@ import app
 from app import db
 from app.models import User, JasperAccount, JasperCredential, SubscriberIdentityModule
 from app.main import bp
-from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids, get_rate_plans_for_account_list_all, get_rate_plans_for_account_list_all_and_sims
+from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids, \
+    get_rate_plans_for_account_list_all, get_rate_plans_for_account_list_all_and_sims
 from app.main.forms import EditProfileForm, AddJasperAPIForm, AddSIMs, ChangeRatePlan
 from app.tasks_beat_schedule import metric_to_value
 
@@ -62,7 +63,7 @@ def jasper_api():
                     "resource_url": form.resource_url.data})
 
         get_iccids.apply_async(kwargs={"username": form.username.data, "api_key": form.api_key.data,
-                                                         "resource_url": form.resource_url.data})
+                                       "resource_url": form.resource_url.data})
 
         update_iccids.apply_async(
             kwargs={"username": form.username.data, "api_key": form.api_key.data,
@@ -88,6 +89,7 @@ def subscriber_identity_module(token):
         db.session.commit()
     return render_template('subscriber_identity_module.html', title='Subscriber Identity Module', form=form,
                            jasper_account=jasper_account)
+
 
 @bp.route('/<token>/rate_plans', methods=['GET', 'POST'])
 @login_required
@@ -119,16 +121,18 @@ def data_rate_plans(token):
     rate_plans = []
 
     for rate in get_rate_plans_for_account_list_all(jasper_account.id):
-        rate_plans.append({"PlanName":rate[0].name, "SubscriptionCharge":rate[0].subscription_charge,
-                           "Data":metric_to_value(rate[2].included_data_unit) * rate[2].included_data,
-                           "Status":"Active" if rate[0].active else "Deactivated"})
+        rate_plans.append({"PlanName": rate[0].name, "SubscriptionCharge": rate[0].subscription_charge,
+                           "Data": metric_to_value(rate[2].included_data_unit) * rate[2].included_data,
+                           "Status": "Active" if rate[0].active else "Deactivated"})
     return {'data': rate_plans}
+
 
 @bp.route('/api/data/<token>/sim')
 @login_required
 def data_SIM(token):
     jasper_account = JasperAccount.verify_id_token(token)
     return {'data': [sims.to_dict() for sims in jasper_account.subscriber_identity_modules]}
+
 
 @bp.route('/api/data/<token>/latest_estimation')
 @login_required
@@ -137,6 +141,22 @@ def data_latest_estimation(token):
     rate_plans = []
     # for rate in get_rate_plans_for_account_list_all_and_sims(jasper_account.id):
     logging.critical(get_rate_plans_for_account_list_all_and_sims(jasper_account.id))
-        # rate_plans.append({"PlanName":rate[0].name, "SubscriptionCharge":rate[0].subscription_charge,
-        #                    "Data":metric_to_value(rate[2].included_data_unit) * rate[2].included_data})
+    # rate_plans.append({"PlanName":rate[0].name, "SubscriptionCharge":rate[0].subscription_charge,
+    #                    "Data":metric_to_value(rate[2].included_data_unit) * rate[2].included_data})
     return {'data': rate_plans}
+
+
+@bp.route('/api/data/<token>/jasper_api')
+@login_required
+def data_jasper(token):
+    user = User.query.filter_by(id=token).first()
+    jasper_api = []
+    for jasper_credential in user.jasper_credential:
+        for jasper_accounts in jasper_credential.jasper_accounts:
+            jasper_api.append({"username": jasper_credential.username, "api_key": jasper_credential.api_key,
+                               "cell_provider": jasper_accounts.cell_provider,
+                               "resource_url": jasper_accounts.resource_url,
+                               "status": "Active" if (
+                                 jasper_credential.last_check - jasper_credential.last_confirmed) - (
+                                 jasper_accounts.last_check - jasper_accounts.last_confirmed) != 0 else "Deactivated"})
+    return {'data': jasper_api}

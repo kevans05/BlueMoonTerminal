@@ -28,31 +28,33 @@
                 </div>
             </div>
         </div>
-
         <div class="collapse" id="ViewJasperAPI">
             <div class="card card-body">
                 <div class="jumbotron jumbotron-fluid">
-                    <table class="table table-striped"
-                           style="width:100%" id="ViewJasperAPITable">
-                        <thead>
-                        <tr>
-                            <th>Status</th>
-                            <th>Cell Provider</th>
-                            <th>Username</th>
-                            <th>Resource URL</th>
-                            <th>API Key</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% if available_apis is not none %}
-                            {% for configured_api in available_apis %}
-                                {% for jasper_account in configured_api.jasper_accounts %}
-                                    {% include '_current_jasper_apis.html' %}
-                                {% endfor %}
-                            {% endfor %}
-                        {% endif %}
-                        </tbody>
-                    </table>
+                                    <div id="table"></div>
+                    <p id="demo"></p>
+                    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+                    <script>
+                        var v = '{{ current_user.id }}';
+                        new gridjs.Grid({
+                            columns: [
+                                {id: 'status', name: 'Status'},
+                                {id: 'cell_provider', name: 'Cell Provider'},
+                                {id: 'resource_url', name: 'Resource URL'},
+                                {id: 'username', name: 'Username'},
+                                {id: 'api_key', name: 'API Key'},
+                            ],
+                            server: {
+                                url: '/api/data/'.concat(v, '/jasper_api'),
+                                then: results => results.data,
+                            },
+                            search: {
+                                selector: (cell, rowIndex, cellIndex) => [0, 1, 4].includes(cellIndex) ? cell : null,
+                            },
+                            sort: true,
+                            pagination: true,
+                        }).render(document.getElementById('table'));
+                    </script>
                 </div>
             </div>
         </div>
