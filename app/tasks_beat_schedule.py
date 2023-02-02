@@ -4,7 +4,7 @@ import app
 from app import celery, db
 from app.models import JasperAccount, JasperCredential, DataUsageToDate, RatePlan, RatePlanZone, RatePlanDataUsage, \
     RatePlanTierDataUsage, RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, RatePlanTierVoiceUsage, \
-    RatePlanTierCost, SubscriberIdentityModule, AssociationBetweenSubscriberIdentityModuleRatePlan
+    RatePlanTierCost, SubscriberIdentityModule, AssociationBetweenSubscriberIdentityModuleRatePlan, RatePlanStatistics
 from app.jasper import rest
 from datetime import datetime
 
@@ -166,7 +166,6 @@ def beat_schedule_optimize_account(**kwargs):
     optimize_by_rate_plan(account=account, rate_plans=rate_plans, sims=sims)
 
 
-
 def optimize_by_rate_plan(account, rate_plans, sims):
     rate_plan = rate_plans[0]
     logging.critical(rate_plan[0].name)
@@ -189,6 +188,7 @@ def optimize_by_rate_plan(account, rate_plans, sims):
                 beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan, sim)
                 beat_schedule_upload_to_jasper(account, rate_plan, sim)
             else:
+                beat_schedule_add_target_statistics_to_rate_plan(number_of_plan, plan_data, rate_plan)
                 break
         res = [i for i in sims if i not in sims_in_plan]
         optimize_by_rate_plan(account, rate_plans[1:], res)
@@ -199,13 +199,16 @@ def optimize_by_rate_plan(account, rate_plans, sims):
             logging.critical(sim)
             beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan,sim)
             beat_schedule_upload_to_jasper(account, rate_plan, sim)
+        beat_schedule_add_target_statistics_to_rate_plan(number_of_plan, plan_data, rate_plan)
 
 
+def beat_schedule_add_target_statistics_to_rate_plan(number_of_plan, plan_data, rate_plan):
+    rate_plan_statistics = RatePlanStatistics(number_of_devices=number_of_plan, sim_total_data=plan_data)
+    rate_plan[0].rate_plan_statistics.append(rate_plan_statistics)
+    db.session.commit()
 
 #logs the upload change in rate  plan, gets the targert SIM from the database, will add the current rateplan assosaition
 def beat_schedule_add_target_subscriber_identify_module_to_rate_plan(rate_plan, sim):
-
-
     target_subscriber_identify_module = SubscriberIdentityModule.query.filter_by(iccid=sim[0]).first()
     association_between_subscriber_identity_module_rate_plan_object = \
         AssociationBetweenSubscriberIdentityModuleRatePlan()

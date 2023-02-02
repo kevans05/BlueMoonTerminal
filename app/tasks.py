@@ -4,8 +4,7 @@ import app
 from app import celery, db
 from app.models import JasperAccount, JasperCredential, User, RatePlan, RatePlanZone, RatePlanTierDataUsage, \
     RatePlanSMSUsage, RatePlanTierSMSUsage, RatePlanVoiceUsage, \
-    RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule, \
-    AssociationBetweenSubscriberIdentityModuleRatePlan
+    RatePlanTierVoiceUsage, RatePlanDataUsage, RatePlanTierCost, SubscriberIdentityModule
 from app.jasper import rest
 from datetime import datetime
 
@@ -236,34 +235,3 @@ def get_rate_plans_for_account_list_all(account):
                                           RatePlanTierCost.rate_plan_id).add_entity(RatePlanTierCost).order_by(
         RatePlanDataUsage.included_data.desc())
 
-
-def get_rate_plans_for_account_list_all_and_sims(account):
-    return db.session.query(AssociationBetweenSubscriberIdentityModuleRatePlan).filter_by(rate_plans == account)
-
-    # db.session.query(RatePlan).filter_by(jasper_account_id=account).join(
-    #     AssociationBetweenSubscriberIdentityModuleRatePlan, RatePlan.id ==
-    #     AssociationBetweenSubscriberIdentityModuleRatePlan.rate_plan_id).\
-    #     order_by(AssociationBetweenSubscriberIdentityModuleRatePlan.date_time_of_change.desc()).add_entity(AssociationBetweenSubscriberIdentityModuleRatePlan).first()
-
-    # .filter_by(jasper_account_id=account).outerjoin(AssociationBetweenSubscriberIdentityModuleRatePlan, RatePlan.id ==
-    #                                                                                 AssociationBetweenSubscriberIdentityModuleRatePlan.rate_plan_id).add_entity(
-    # AssociationBetweenSubscriberIdentityModuleRatePlan).outerjoin(RatePlanZone, RatePlan.id ==
-    #                                                                                 RatePlanZone.rate_plan_id).add_entity(
-    # RatePlanZone).outerjoin(
-    # RatePlanDataUsage, RatePlanZone.id ==
-    #                    RatePlanDataUsage.rate_plan_zone_id).add_entity(RatePlanDataUsage).outerjoin(
-    # RatePlanTierDataUsage, RatePlanDataUsage.id ==
-    #                        RatePlanTierDataUsage.rate_plan_data_usages_id).add_entity(
-    # RatePlanTierDataUsage).outerjoin(
-    # RatePlanSMSUsage, RatePlanZone.id ==
-    #                   RatePlanSMSUsage.rate_plan_zones_id).add_entity(RatePlanSMSUsage).outerjoin(
-    # RatePlanTierSMSUsage, RatePlanSMSUsage.id ==
-    #                       RatePlanTierSMSUsage.rate_plan_sms_usages_id).add_entity(
-    # RatePlanTierSMSUsage).outerjoin(
-    # RatePlanVoiceUsage, RatePlanZone.id ==
-    #                     RatePlanVoiceUsage.rate_plan_zones_id).add_entity(RatePlanVoiceUsage).outerjoin(
-    # RatePlanTierVoiceUsage, RatePlanVoiceUsage.id ==
-    #                         RatePlanTierVoiceUsage.rate_plan_voice_usages_id).add_entity(
-    # RatePlanTierVoiceUsage).outerjoin(RatePlanTierCost, RatePlan.id ==
-    #                                   RatePlanTierCost.rate_plan_id).add_entity(RatePlanTierCost).order_by(
-    # RatePlanDataUsage.included_data.desc())

@@ -155,6 +155,22 @@ class RatePlan(db.Model):
     rate_plan_tiers = db.relationship("RatePlanTierCost", back_populates="rate_plan")
     rate_plan_zones = db.relationship("RatePlanZone", back_populates="rate_plan")
 
+    rate_plan_statistics = db.relationship("RatePlanStatistics" , back_populates="rate_plan")
+
+    def return_latest_statistics(self):
+        return db.session.query(RatePlanStatistics).filter_by(rate_plan_id=self.id).order_by(RatePlanStatistics.date_time.desc()).first()
+
+
+class RatePlanStatistics(db.Model):
+    __tablename__ = "rate_plan_statistics"
+    id = db.Column(db.Integer, primary_key=True)
+    number_of_devices = db.Column(db.Integer)
+    sim_total_data = db.Column(db.Float)
+    date_time = db.Column(db.DateTime(), default=func.now())
+
+    rate_plan_id = db.Column(db.Integer, db.ForeignKey("rate_plan.id"))
+    rate_plan = db.relationship("RatePlan", back_populates="rate_plan_statistics")
+
 
 class RatePlanTierCost(db.Model):
     __tablename__ = "rate_plan_tier"

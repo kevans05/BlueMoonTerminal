@@ -38,7 +38,7 @@
                                     <li class="nav-item dropdown show">
                                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                                            data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-expanded="true">
-                                            {{ account.resource_url }} ▼
+                                            {{ account.resource_url.split("/")[2] }} ▼
                                         </a>
                                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                             <li><a href="{{ url_for('main.rate_plans', token=account.get_id_token() ) }}">Rate Plan</a></li>

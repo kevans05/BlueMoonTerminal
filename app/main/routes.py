@@ -8,7 +8,7 @@ from app import db
 from app.models import User, JasperAccount, JasperCredential, SubscriberIdentityModule
 from app.main import bp
 from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids, \
-    get_rate_plans_for_account_list_all, get_rate_plans_for_account_list_all_and_sims
+    get_rate_plans_for_account_list_all
 from app.main.forms import EditProfileForm, AddJasperAPIForm, AddSIMs, ChangeRatePlan
 from app.tasks_beat_schedule import metric_to_value
 
@@ -139,10 +139,17 @@ def data_SIM(token):
 def data_latest_estimation(token):
     jasper_account = JasperAccount.verify_id_token(token)
     rate_plans = []
-    # for rate in get_rate_plans_for_account_list_all_and_sims(jasper_account.id):
-    logging.critical(get_rate_plans_for_account_list_all_and_sims(jasper_account.id))
-    # rate_plans.append({"PlanName":rate[0].name, "SubscriptionCharge":rate[0].subscription_charge,
-    #                    "Data":metric_to_value(rate[2].included_data_unit) * rate[2].included_data})
+    for rate in get_rate_plans_for_account_list_all(jasper_account.id):
+        if rate[0].return_latest_statistics() is not None:
+            rate_plans.append({"PlanName": rate[0].name, "SubscriptionCharge": rate[0].subscription_charge,
+                           "Data_per_device": metric_to_value(rate[2].included_data_unit) * rate[2].included_data,
+                               "Devices_in_plan": rate[0].return_latest_statistics().number_of_devices,
+                               "Data_in_devices":rate[0].return_latest_statistics().sim_total_data})
+        else:
+            rate_plans.append({"PlanName": rate[0].name, "SubscriptionCharge": rate[0].subscription_charge,
+                               "Data_per_device": metric_to_value(rate[2].included_data_unit) * rate[2].included_data,
+                               "Devices_in_plan": 0,
+                               "Data_in_devices": 0})
     return {'data': rate_plans}
 
 
