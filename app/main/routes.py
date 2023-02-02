@@ -7,7 +7,7 @@ import app
 from app import db
 from app.models import User, JasperAccount, JasperCredential, SubscriberIdentityModule
 from app.main import bp
-from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids, get_rate_plans_for_account_list_all
+from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids, get_rate_plans_for_account_list_all, get_rate_plans_for_account_list_all_and_sims
 from app.main.forms import EditProfileForm, AddJasperAPIForm, AddSIMs, ChangeRatePlan
 from app.tasks_beat_schedule import metric_to_value
 
@@ -108,7 +108,7 @@ def rate_plans(token):
 def latest_estimation(token):
     jasper_account = JasperAccount.verify_id_token(token)
 
-    return render_template('rate_plan.html', title='Latest Estimation',
+    return render_template('latest_estimation.html', title='Latest Estimation',
                            jasper_account=jasper_account)
 
 
@@ -129,3 +129,14 @@ def data_rate_plans(token):
 def data_SIM(token):
     jasper_account = JasperAccount.verify_id_token(token)
     return {'data': [sims.to_dict() for sims in jasper_account.subscriber_identity_modules]}
+
+@bp.route('/api/data/<token>/latest_estimation')
+@login_required
+def data_latest_estimation(token):
+    jasper_account = JasperAccount.verify_id_token(token)
+    rate_plans = []
+    # for rate in get_rate_plans_for_account_list_all_and_sims(jasper_account.id):
+    logging.critical(get_rate_plans_for_account_list_all_and_sims(jasper_account.id))
+        # rate_plans.append({"PlanName":rate[0].name, "SubscriptionCharge":rate[0].subscription_charge,
+        #                    "Data":metric_to_value(rate[2].included_data_unit) * rate[2].included_data})
+    return {'data': rate_plans}
