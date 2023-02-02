@@ -353,6 +353,8 @@ class SubscriberIdentityModule(db.Model):
     def add_rate_plans(self, rate_plan):
         self.association_between_subscriber_identity_module_rate_plans.append(AssociationBetweenSubscriberIdentityModuleRatePlan(sim=self, date_time_of_change=func.now(), rate_plans=rate_plan))
 
+    def return_latest_data(self):
+        return db.session.query(DataUsageToDate).filter_by(sim_id=self.id).order_by(DataUsageToDate.date_updated.desc()).first()
     def to_dict(self):
         return {
             'id': self.id,
@@ -360,7 +362,7 @@ class SubscriberIdentityModule(db.Model):
             'imei': self.imei,
             'imsi': self.imsi,
             'status': self.status,
-            'fixed_ip_address': self.fixed_ip_address
+            'fixed_ip_address': self.fixed_ip_address,
         }
 
 
