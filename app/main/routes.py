@@ -1,17 +1,16 @@
 from datetime import datetime
 
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, send_from_directory, abort
 from flask_login import current_user, login_required
 import logging
 import app
 from app import db
-from app.models import User, JasperAccount, JasperCredential, SubscriberIdentityModule
+from app.models import User, JasperAccount, JasperCredential, SubscriberIdentityModule, RatePlan
 from app.main import bp
 from app.tasks import add_rate_plans, get_iccids, add_api_connections, update_iccids, \
     get_rate_plans_for_account_list_all
 from app.main.forms import EditProfileForm, AddJasperAPIForm, AddSIMs, ChangeRatePlan
 from app.tasks_beat_schedule import metric_to_value
-
 
 @bp.before_app_request
 def before_request():
@@ -119,10 +118,24 @@ def data_rate_plans(token):
     rate_plans = []
 
     for rate in get_rate_plans_for_account_list_all(jasper_account.id):
-        rate_plans.append({"PlanName": rate[0].name, "SubscriptionCharge": rate[0].subscription_charge,
+        rate_plans.append({"ID":rate[0].id, "PlanName": rate[0].name, "SubscriptionCharge": rate[0].subscription_charge,
                            "Data": metric_to_value(rate[2].included_data_unit) * rate[2].included_data,
-                           "Status": "Active" if rate[0].active else "Deactivated"})
+                           "Status": rate[0].active})
     return {'data': rate_plans}
+
+
+@bp.route('/api/data/<token>/rate_plans' , methods=['POST'])
+@login_required
+def data_rate_plans_update(token):
+    jasper_account = JasperAccount.verify_id_token(token)
+    data = request.get_json()
+    if 'id' not in data:
+        abort(400)
+    rate_plans = RatePlan.query.get(data['id'])
+    logging.critical(data)
+    logging.critical(rate_plans)
+    return '', 204
+
 
 
 @bp.route('/api/data/<token>/sim')
